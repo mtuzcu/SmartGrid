@@ -11,9 +11,10 @@ class Standard_Object:
             means 1 if cable is charged and 0 if not."""
             self.x_coordinate = x
             self.y_coordinate = y
-            self.end_connections: list = []
             self.property
             self.max_property = max_property
+            self.end_connections: list = []
+            self.connected_neighbours: list = []
         
         def move_location(self, x, y):
             """Moves the object to the new x, y coordinate"""
@@ -38,6 +39,14 @@ class Standard_Object:
             else:
                 return 1
         
+        def modify_connected_neighbours(self, operation, connected_neighbour):
+            """Adds or removes connected_neighbour to list of objects this object is connected to.
+            use operation = 0 to add and 1 to remove the connected_neighbour."""
+            if connected_neighbour not in self.connected_neighbours and operation == 0:
+                self.end_connections.append(connected_neighbour)
+            if connected_neighbour in self.connected_neighbours and operation == 1:
+                self.end_connections.pop(connected_neighbour)
+        
         def __hash__(self):
             # Assuming 'value' is immutable (e.g., an integer)
             return hash(self.value)
@@ -57,16 +66,7 @@ class Battery(Standard_Object):
 class Cable(Standard_Object):
     def __init__(self):
         """cable object containing data for instanced cable. Multiple cables per node possible"""
-        self.connected_neighbours: list = []
     
-    def modify_connected_neighbours(self, operation, connected_neighbour):
-        """Adds or removes connected_neighbour to list of objects this object is connected to.
-        use operation = 0 to add and 1 to remove the connected_neighbour."""
-        if connected_neighbour not in self.connected_neighbours and operation == 0:
-            self.end_connections.append(connected_neighbour)
-        if connected_neighbour in self.connected_neighbours and operation == 1:
-            self.end_connections.pop(connected_neighbour)
-
 class Node:
     def __init__(self, x, y):
         """Node on grid containing node data"""
@@ -118,6 +118,36 @@ class Grid:
         self.grid: dict
         self.houses: dict
         self.batteries: dict
+        self.cables: dict
+    
+    def component_dictionairy(self, component: object, operation: int) -> dict:
+        """If operation is 0, returns given component's dictionairy. If operation 
+        is 1, returns batteries dictionairy if component is house and vice versa."""
+    
+        if isinstance(component, House):
+            if operation == 0:
+                return self.houses
+            return self.batteries
+        
+        if isinstance(component, Battery):
+            if operation == 0:
+                return self.batteries
+            return self.houses
+        
+    def connect_neighbours(self, component1: object, component2: object):
+        """connects component 1 and 2 to eachother as neighbours"""
+        component1.modify_connected_neighbours(component2, 0)
+        component2.modify_connected_neighbours(component1, 0)
+    
+    def connect_end_components(self, component1: object, component2: object):
+        """connects component 1 and 2 to eachother as end connections"""
+        component1.modify_end_connection(0, component2)
+        component2.modify_end_connection(0, component1)
+
+    # ==================================================================
+    # Functions below are used to generate the grid. 
+    # This is only used once at the start 
+    # ==================================================================
 
     def create_node(self, x, y) -> Node:
         """Creates a grid node"""
@@ -131,7 +161,7 @@ class Grid:
         for x in range(0, size_x):
             for y in range(0, size_y):
                 self.grid[(x, y)] = self.create_node(x, y)
-
+    
     def fill_grid(self, district_file_path):
         """generates a grid of nodes filed with houses and batteries according
         to the data given in csv_file."""
