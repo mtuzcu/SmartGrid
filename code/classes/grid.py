@@ -11,7 +11,7 @@ class Standard_Object:
             means 1 if cable is charged and 0 if not."""
             self.x_coordinate = x
             self.y_coordinate = y
-            self.property
+            self.property = 0
             self.max_property = max_property
             self.end_connections: list = []
             self.connected_neighbours: list = []
@@ -47,24 +47,25 @@ class Standard_Object:
             if connected_neighbour in self.connected_neighbours and operation == 1:
                 self.end_connections.pop(connected_neighbour)
         
+        def get_cords(self) -> tuple:
+            """returns the (x, y) coordinates as tuple"""
+            return (self.x_coordinate, self.y_coordinate)
+        
         def __hash__(self):
             # Assuming 'value' is immutable (e.g., an integer)
-            return hash(self.value)
+            return hash((self.x_coordinate, self.y_coordinate))
 
         def __eq__(self, other):
             # Custom equality comparison for instances of CustomKey
-            return isinstance(other, CustomKey) and self.value == other.value
+            return isinstance(other, Standard_Object) and self.value == other.value
 
 class House(Standard_Object):
-    def __init__(self):
         """House objet containing data for instanced house. Only 1 house per node"""
      
 class Battery(Standard_Object):
-    def __init__(self):
         """Battery object containing data for instanced battery. Only 1 battery per node"""
 
 class Cable(Standard_Object):
-    def __init__(self):
         """cable object containing data for instanced cable. Multiple cables per node possible"""
     
 class Node:
@@ -72,8 +73,8 @@ class Node:
         """Node on grid containing node data"""
         self.x_coordinate = x
         self.y_coordinate = y
-        self.battery
-        self.house
+        self.battery: object = None
+        self.house: object = None
         self.cables = []
     
     def add_object(self, object_id, max_property = 0):
@@ -110,15 +111,27 @@ class Node:
                 self.battery = None
             if object_id in (0, 3):
                 self.cables = None
+    
+    def get_cords(self) -> tuple:
+            """returns the (x, y) coordinates as tuple"""
+            return (self.x_coordinate, self.y_coordinate)
 
 class Grid:
-
     # Constructor method (initializer)
     def __init__(self):
-        self.grid: dict
-        self.houses: dict
-        self.batteries: dict
-        self.cables: dict
+        # dictionaires and lists
+        self.matrix: dict = {}
+        self.houses: dict = {}
+        self.batteries: dict = {}
+        self.cables: dict = {}
+        self.nodes: list = []
+
+        # attributes
+        self.size = 0
+        self.N_houses: int
+        self.N_batteries: int
+        self.N_connected_houses: int
+        self.N_connected_batteries: int
     
     def component_dictionairy(self, component: object, operation: int) -> dict:
         """If operation is 0, returns given component's dictionairy. If operation 
@@ -143,6 +156,24 @@ class Grid:
         """connects component 1 and 2 to eachother as end connections"""
         component1.modify_end_connection(0, component2)
         component2.modify_end_connection(0, component1)
+        self.update_connections(component1, component2)
+    
+    def update_connections(self, component1: object, component2: object):
+        if isinstance(component1, House) or isinstance(component2, House):
+            self.N_connected_houses += 1
+        if isinstance(component1, Battery) or isinstance(component2, Battery):
+            self.N_connected_batteries += 1
+    
+    # MAGIC METHODS
+    def __getitem__(self, coordinates):
+        """allows the use of grid[x, y] to return the node at (x, y)"""
+        x, y = coordinates
+        return self.nodes[x][y]
+
+    def __setitem__(self, coordinates, node):
+        """stores a node in nested list nodes at coordinate (x, y)"""
+        x, y = coordinates
+        self.nodes[x][y] = node
 
     # ==================================================================
     # Functions below are used to generate the grid. 
@@ -151,16 +182,21 @@ class Grid:
 
     def create_node(self, x, y) -> Node:
         """Creates a grid node"""
-        return Node(x, y)
+        buffer_node = Node(x,y)
+        self[x, y] = buffer_node
+        return buffer_node
     
     def create_grid(self, size_x, size_y):
         """Creates a size_x by size_y grid of nodes"""
-        self.grid.clear()
+        self.matrix.clear()
         self.houses.clear()
         self.batteries.clear()
+        self.nodes.clear()
+        self.size = size_x
+        self.nodes = [[Node(x, y) for x in range(size_x)] for y in range(size_y)]
         for x in range(0, size_x):
             for y in range(0, size_y):
-                self.grid[(x, y)] = self.create_node(x, y)
+                self.matrix[(x, y)] = self.create_node(x, y)
     
     def fill_grid(self, district_file_path):
         """generates a grid of nodes filed with houses and batteries according
@@ -199,18 +235,21 @@ class Grid:
                             capacity = float(row[2])
 
                             # add house object to node at (x, y)
-                            self.grid[(x, y)].add_object(1, capacity)
-                            self.houses[(x, y)] = self.grid[(x, y)].house
+                            self.matrix[(x, y)].add_object(1, capacity)
+                            self.houses[(x, y)] = self.matrix[(x, y)].house
                         else:
                             x, y = map(int, row[0].split(','))
                             capacity = float(row[1])
 
                             # add battery object at (x, y)
-                            self.grid[(x, y)].add_object(2, capacity)
-                            self.batteries[(x, y)] = self.grid[(x, y)].battery
+                            self.matrix[(x, y)].add_object(2, capacity)
+                            self.batteries[(x, y)] = self.matrix[(x, y)].battery
 
+            self.N_houses = len(self.houses)
+            self.N_batteries = len(self.batteries)
+            
             # if data input successful 
-            if nodes == len(self.houses) + len(self.batteries):
+            if nodes == self.N_houses + self.N_batteries:
                 print("grid successfully filled")
             else:
                 print("Error occured during filling of grid. Not all data is filled")

@@ -1,7 +1,8 @@
 # Contains Functions for generating grid layout using csv data
 # Mahir Tuzcu - 11070978
 
-from ..universal import *
+import random
+from classes.grid import *
 
 def random(start = 0, end = 1) -> float:
     """returns a random float between[start, end]"""

@@ -1,0 +1,21 @@
+# contains universal algorithm script
+
+from classes.grid import *
+from functions.distance import *
+from functions.Random import *
+from standard import *
+
+class algorithm_executor():
+
+    def __init__(self, grid) -> None:
+        self.itterations = 10000
+        self.grid = grid
+
+    def run_algorithm(self):
+        
+        for i in range(0, self.itterations):
+            for battery in self.grid.batteries:
+                random_algorithm(self.grid, battery)
+            
+            if district_solved():
+                break
