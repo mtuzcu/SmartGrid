@@ -38,6 +38,12 @@ class Standard_Object:
                 return 0
             else:
                 return 1
+            
+        def is_end_connected(self):
+            """returns 1 if object has an end connection. Otherwise returns 0"""
+            if len(self.end_connections) == 0:
+                return 0
+            return 1
         
         def modify_connected_neighbours(self, operation, connected_neighbour):
             """Adds or removes connected_neighbour to list of objects this object is connected to.
@@ -76,6 +82,14 @@ class Node:
         self.battery: object = None
         self.house: object = None
         self.cables = []
+
+        # astar attributes
+        self.h = 0
+        self.g = 0
+        self.parent: Node = None
+    
+    def __lt__(self, other):
+        return (self.g + self.h) < (other.g + other.h)
     
     def add_object(self, object_id, max_property = 0):
         """Adds a house or battery object if node not already occupied by said object
@@ -159,10 +173,12 @@ class Grid:
         self.update_connections(component1, component2)
     
     def update_connections(self, component1: object, component2: object):
-        if isinstance(component1, House) or isinstance(component2, House):
-            self.N_connected_houses += 1
-        if isinstance(component1, Battery) or isinstance(component2, Battery):
-            self.N_connected_batteries += 1
+        for component in (component1, component2):
+            if component.is_end_connected() == 0:
+                if isinstance(component, House):
+                    self.N_connected_houses += 1
+                if isinstance(component, Battery):
+                    self.N_connected_batteries += 1
     
     # MAGIC METHODS
     def __getitem__(self, coordinates):
