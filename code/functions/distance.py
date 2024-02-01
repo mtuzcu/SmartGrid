@@ -26,15 +26,16 @@ def manhatten_distance(node1, node2) -> int:
     the (x, y) coordinates in tuple format of the object"""
     cords1 = cord_filter(node1)
     cords2 = cord_filter(node2)
-    return (math.abs(cords1[0] - cords2[0]) + math.abs(cords1[1] - cords2[1]))
+    distance = (abs(cords1[0] - cords2[0]) + abs(cords1[1] - cords2[1]))
+    return distance
 
 def get_neighbours(x, y, size):
     """returns list of neighbouring (x, y) coordinate in tuple form if they are within bounds"""
     neighbours = []
     for dx, dy in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
         next_x, next_y = x + dx, y + dy
-        if 0 <= next_x <= size and 0 <= next_y <= size:
-            neighbours.append(x + dx, y + dy)
+        if 0 <= next_x < size and 0 <= next_y < size:
+            neighbours.append((x + dx, y + dy))
     return neighbours
 
 

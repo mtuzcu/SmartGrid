@@ -1,7 +1,7 @@
 # Contains Functions for generating grid layout using csv data
 # Mahir Tuzcu - 11070978
 
-import random
+import random as rand
 from classes.grid import *
 
 def random(start = 0, end = 1) -> float:
@@ -19,21 +19,25 @@ def select_random_index(N_candidates: int) -> int:
         if random_number <= cummulative_sum:
             return i
 
+def get_random_key(dictionairy: dict):
+    return rand.choice(list(dictionairy.keys()))
+
+def get_random_component(dictionairy):
+    return dictionairy[get_random_key(dictionairy)][0]
+
 def select_random_component(candidates_list) -> object:
     """returns a randomly chosen component from list of eligible components"""
     index = select_random_index(len(candidates_list))
     return candidates_list[index]
 
-def get_random_component(component: object) -> object:
+def get_inverse_component(grid, component: object) -> object:
     """returns a new random component. If input component is house, returns a battery 
     and vice versa"""
     random_component = None
-    if isinstance(component, House): 
-        while random_component in (component, None):
-            random_component, location = select_random_component(list(Grid.batteries.items()))
+    if isinstance(component, House):
+        random_component = get_random_component(grid.batteries)
 
     if isinstance(component, Battery):
-        while random_component in (component, None):
-            random_component, location = select_random_component(list(Grid.houses.items()))
+        random_component = get_random_component(grid.houses)
     
     return random_component

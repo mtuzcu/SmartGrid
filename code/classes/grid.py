@@ -61,10 +61,6 @@ class Standard_Object:
             # Assuming 'value' is immutable (e.g., an integer)
             return hash((self.x_coordinate, self.y_coordinate))
 
-        def __eq__(self, other):
-            # Custom equality comparison for instances of CustomKey
-            return isinstance(other, Standard_Object) and self.value == other.value
-
 class House(Standard_Object):
         """House objet containing data for instanced house. Only 1 house per node"""
      
@@ -134,7 +130,6 @@ class Grid:
     # Constructor method (initializer)
     def __init__(self):
         # dictionaires and lists
-        self.matrix: dict = {}
         self.houses: dict = {}
         self.batteries: dict = {}
         self.cables: dict = {}
@@ -144,8 +139,8 @@ class Grid:
         self.size = 0
         self.N_houses: int
         self.N_batteries: int
-        self.N_connected_houses: int
-        self.N_connected_batteries: int
+        self.N_connected_houses: int = 0
+        self.N_connected_batteries: int = 0
     
     def component_dictionairy(self, component: object, operation: int) -> dict:
         """If operation is 0, returns given component's dictionairy. If operation 
@@ -174,7 +169,7 @@ class Grid:
     
     def update_connections(self, component1: object, component2: object):
         for component in (component1, component2):
-            if component.is_end_connected() == 0:
+            if component.is_end_connected() == 1:
                 if isinstance(component, House):
                     self.N_connected_houses += 1
                 if isinstance(component, Battery):
@@ -183,8 +178,7 @@ class Grid:
     # MAGIC METHODS
     def __getitem__(self, coordinates):
         """allows the use of grid[x, y] to return the node at (x, y)"""
-        x, y = coordinates
-        return self.nodes[x][y]
+        return self.nodes[coordinates]
 
     def __setitem__(self, coordinates, node):
         """stores a node in nested list nodes at coordinate (x, y)"""
@@ -198,13 +192,10 @@ class Grid:
 
     def create_node(self, x, y) -> Node:
         """Creates a grid node"""
-        buffer_node = Node(x,y)
-        self[x, y] = buffer_node
-        return buffer_node
+        return Node(x,y)
     
     def create_grid(self, size_x, size_y):
         """Creates a size_x by size_y grid of nodes"""
-        self.matrix.clear()
         self.houses.clear()
         self.batteries.clear()
         self.nodes.clear()
@@ -212,7 +203,7 @@ class Grid:
         self.nodes = [[Node(x, y) for x in range(size_x)] for y in range(size_y)]
         for x in range(0, size_x):
             for y in range(0, size_y):
-                self.matrix[(x, y)] = self.create_node(x, y)
+                self.nodes[x][y] = self.create_node(x, y)
     
     def fill_grid(self, district_file_path):
         """generates a grid of nodes filed with houses and batteries according
@@ -251,15 +242,15 @@ class Grid:
                             capacity = float(row[2])
 
                             # add house object to node at (x, y)
-                            self.matrix[(x, y)].add_object(1, capacity)
-                            self.houses[(x, y)] = self.matrix[(x, y)].house
+                            self.nodes[x][y].add_object(1, capacity)
+                            self.houses[self.nodes[x][y]] = (self.nodes[x][y].house, (x, y))
                         else:
                             x, y = map(int, row[0].split(','))
                             capacity = float(row[1])
 
                             # add battery object at (x, y)
-                            self.matrix[(x, y)].add_object(2, capacity)
-                            self.batteries[(x, y)] = self.matrix[(x, y)].battery
+                            self.nodes[x][y].add_object(2, capacity)
+                            self.batteries[self.nodes[x][y]] = (self.nodes[x][y].battery, (x, y))
 
             self.N_houses = len(self.houses)
             self.N_batteries = len(self.batteries)

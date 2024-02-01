@@ -10,8 +10,7 @@ def random_algorithm(Grid: object, component: object):
     """random algorithm"""
 
     # select random component to connect to
-    random_component = get_random_component(component)
-    
+    random_component = get_inverse_component(Grid, component)
     # connect component with the new random_component
     Grid.connect_end_components(random_component, component)
 
@@ -21,18 +20,17 @@ def astar(grid: Grid, start: Node, end: Node):
     """astar aglorithm"""
     open_set = []
     heapq.heappush(open_set, start)
-    cost = 0
-    h = manhatten_distance(start, end)
 
     while open_set:
         current = heapq.heappop(open_set)
-        if current.x == end.x and current.y == end.y:
+        if current.x_coordinate == end.x_coordinate and current.y_coordinate == end.y_coordinate:
             print("cable set")
         
-        for next_x, next_y in get_neighbours(current.x, current.y, grid.size):
+        for next_x, next_y in get_neighbours(current.x_coordinate, current.y_coordinate, grid.size):
             next_node = grid[next_x][next_y]
             g_value = calc_g(start, next_node)
-            if g_value < next_node.g:
+            print(g_value, next_node.g)
+            if g_value > next_node.g:
                 next_node.g = g_value
                 next_node.h = calc_h(next_node, end)
                 next_node.parent = current
