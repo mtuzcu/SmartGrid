@@ -3,23 +3,25 @@
 import csv
 import os
 import numpy as np
+import functions
+
+cable_cost = 9
 
 class Standard_Object:
-        def __init__(self, x, y, max_property = 0) -> object:
+        def __init__(self, cords, node, max_property = 0):
             """Template for a standard grid object. Property depends on the object
             for houses and batteries it means remaining output/capacity. For cables it
             means 1 if cable is charged and 0 if not."""
-            self.x_coordinate = x
-            self.y_coordinate = y
+            self.cords = cords
+            self.node = node
             self.property = 0
             self.max_property = max_property
             self.end_connections: list = []
             self.connected_neighbours: list = []
         
-        def move_location(self, x, y):
+        def move_location(self, new_cords):
             """Moves the object to the new x, y coordinate"""
-            self.x_coordinate = x
-            self.y_coordinate = y
+            self.cords = new_cords
         
         def modify_end_connection(self, operation, connected_object):
             """Adds or removes connected_objects to list of objects this object is end_connected to.
@@ -53,13 +55,9 @@ class Standard_Object:
             if connected_neighbour in self.connected_neighbours and operation == 1:
                 self.end_connections.pop(connected_neighbour)
         
-        def get_cords(self) -> tuple:
-            """returns the (x, y) coordinates as tuple"""
-            return (self.x_coordinate, self.y_coordinate)
-        
         def __hash__(self):
             # Assuming 'value' is immutable (e.g., an integer)
-            return hash((self.x_coordinate, self.y_coordinate))
+            return hash(self.cords)
 
 class House(Standard_Object):
         """House objet containing data for instanced house. Only 1 house per node"""
@@ -67,17 +65,33 @@ class House(Standard_Object):
 class Battery(Standard_Object):
         """Battery object containing data for instanced battery. Only 1 battery per node"""
 
-class Cable(Standard_Object):
+class Cable:
         """cable object containing data for instanced cable. Multiple cables per node possible"""
+        def __init__(self, cords):
+            self.cords = cords
+            self.endpoint_cords: tuple
+            self.connected_house: House
+            self.connected_battery: Battery
+            self.cost = 0 
+
+        def modify_connection(self, Battery):
+            """Changes which battery the cable is connected to"""
+            self.connected_battery = Battery
+            self.endpoint_cords = Battery.cords
+            self.get_cost()
+
+        def get_cost(self):
+            """calculates the cost of the battery"""
+            self.cost = cable_cost * functions.euclidean_distance(self.cords, self.endpoint_cords)
     
 class Node:
-    def __init__(self, x, y):
+    def __init__(self, grid, cords: tuple):
         """Node on grid containing node data"""
-        self.x_coordinate = x
-        self.y_coordinate = y
+        self.grid = grid
+        self.cords = cords
         self.battery: object = None
         self.house: object = None
-        self.cables = []
+        self.cables: list = []
 
         # astar attributes
         self.h = 0
@@ -90,30 +104,35 @@ class Node:
     def add_object(self, object_id, max_property = 0):
         """Adds a house or battery object if node not already occupied by said object
         object_id is 1 for a house and 2 for a battery and 3 for a cable dictionairy.
-        If object_id refers to an already existing object, that object will be added."""
+        If object_id refers to an already instanced object, that object will be added."""
         if (object_id == 1 or isinstance(object_id, House)) and not self.house:
             if isinstance(object_id, House):
                 self.house = object_id
             else:
-                self.house = House(self.x_coordinate, self.y_coordinate, max_property)
+                self.house = House(self.cords, self, max_property)
         if (object_id == 2 or isinstance(object_id, Battery)) and not self.battery:
             if isinstance(object_id, Battery):
                 self.battery = object_id
             else:
-                self.battery = Battery(self.x_coordinate, self.y_coordinate, max_property)
+                self.battery = Battery(self.cords, self, max_property)
         if (object_id == 3 or isinstance(object_id, Cable)):
             if isinstance(object_id, Cable):
                 self.cables.append(object_id)
             else:
-                self.cables.append(Cable(self.x_coordinate, self.y_coordinate, 1))
+                object_id = Cable(self.cords)
+                self.cables.append(object_id)
+            self.grid.cables.append(object_id)
+            return object_id
     
     def remove_object(self, object_id):
         """removes a house or battery object if node not already occupied by said object
         object_id is 0 to remove all objects, 1 for a house, 2 for a battery, 3 for a cable.
-        if a cable object is reference is used for object_id, that specific cable will be 
+        if a cable object reference is used for object_id, that specific cable will be 
         removed."""
         if isinstance(object_id, Cable):
-            self.cables.pop(object_id)
+            self.grid.total_cable_cost += -object_id.cost
+            self.cables.remove(object_id)
+            self.grid.cables.remove(object_id)
         else:
             if object_id in (0, 1):
                 self.house = None
@@ -121,18 +140,14 @@ class Node:
                 self.battery = None
             if object_id in (0, 3):
                 self.cables = None
-    
-    def get_cords(self) -> tuple:
-            """returns the (x, y) coordinates as tuple"""
-            return (self.x_coordinate, self.y_coordinate)
 
 class Grid:
     # Constructor method (initializer)
     def __init__(self):
         # dictionaires and lists
-        self.houses: dict = {}
-        self.batteries: dict = {}
-        self.cables: dict = {}
+        self.houses: list = []
+        self.batteries: list = []
+        self.cables: list = []
         self.nodes: list = []
 
         # attributes
@@ -141,31 +156,24 @@ class Grid:
         self.N_batteries: int
         self.N_connected_houses: int = 0
         self.N_connected_batteries: int = 0
+
+        # stats
+        self.total_cable_cost = 0
     
-    def component_dictionairy(self, component: object, operation: int) -> dict:
-        """If operation is 0, returns given component's dictionairy. If operation 
-        is 1, returns batteries dictionairy if component is house and vice versa."""
-    
-        if isinstance(component, House):
-            if operation == 0:
-                return self.houses
-            return self.batteries
-        
-        if isinstance(component, Battery):
-            if operation == 0:
-                return self.batteries
-            return self.houses
-        
+    def connect(self, component1: object, component2: object):
+        """connects a component1 to component2"""
+        if isinstance(component1, House):
+            node1 = component1.node
+            new_cable = node1.add_object(3)
+            new_cable.modify_connection(component2)
+            self.total_cable_cost += new_cable.cost
+            if len(node1.cables) > 1:
+                self.compare_cables(node1)  
+
     def connect_neighbours(self, component1: object, component2: object):
         """connects component 1 and 2 to eachother as neighbours"""
         component1.modify_connected_neighbours(component2, 0)
         component2.modify_connected_neighbours(component1, 0)
-    
-    def connect_end_components(self, component1: object, component2: object):
-        """connects component 1 and 2 to eachother as end connections"""
-        component1.modify_end_connection(0, component2)
-        component2.modify_end_connection(0, component1)
-        self.update_connections(component1, component2)
     
     def update_connections(self, component1: object, component2: object):
         for component in (component1, component2):
@@ -174,6 +182,19 @@ class Grid:
                     self.N_connected_houses += 1
                 if isinstance(component, Battery):
                     self.N_connected_batteries += 1
+    
+    def compare_cables(self, node1: object):
+        cables = node1.cables
+        lowest_cost = 0
+        for cable in cables:
+            if lowest_cost == 0:
+                lowest_cost = cable
+            else:
+                if lowest_cost.cost >= cable.cost:
+                    node1.remove_object(lowest_cost)
+                    lowest_cost = cable
+                else:
+                    node1.remove_object(cable)
     
     # MAGIC METHODS
     def __getitem__(self, coordinates):
@@ -189,10 +210,6 @@ class Grid:
     # Functions below are used to generate the grid. 
     # This is only used once at the start 
     # ==================================================================
-
-    def create_node(self, x, y) -> Node:
-        """Creates a grid node"""
-        return Node(x,y)
     
     def create_grid(self, size_x, size_y):
         """Creates a size_x by size_y grid of nodes"""
@@ -200,10 +217,7 @@ class Grid:
         self.batteries.clear()
         self.nodes.clear()
         self.size = size_x
-        self.nodes = [[Node(x, y) for x in range(size_x)] for y in range(size_y)]
-        for x in range(0, size_x):
-            for y in range(0, size_y):
-                self.nodes[x][y] = self.create_node(x, y)
+        self.nodes = [[Node(self, (x, y)) for y in range(size_y)] for x in range(size_x)]
     
     def fill_grid(self, district_file_path):
         """generates a grid of nodes filed with houses and batteries according
@@ -243,14 +257,14 @@ class Grid:
 
                             # add house object to node at (x, y)
                             self.nodes[x][y].add_object(1, capacity)
-                            self.houses[self.nodes[x][y]] = (self.nodes[x][y].house, (x, y))
+                            self.houses.append(self.nodes[x][y].house)
                         else:
                             x, y = map(int, row[0].split(','))
                             capacity = float(row[1])
 
                             # add battery object at (x, y)
                             self.nodes[x][y].add_object(2, capacity)
-                            self.batteries[self.nodes[x][y]] = (self.nodes[x][y].battery, (x, y))
+                            self.batteries.append(self.nodes[x][y].battery)
 
             self.N_houses = len(self.houses)
             self.N_batteries = len(self.batteries)

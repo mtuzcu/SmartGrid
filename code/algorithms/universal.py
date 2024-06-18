@@ -2,9 +2,7 @@
 
 import random as ran
 from classes.grid import *
-from functions.distance import *
-from functions.Random import *
-from functions.simulation import *
+import functions
 from algorithms.general import *
 
 class algorithm_executor():
@@ -16,12 +14,10 @@ class algorithm_executor():
     def run_algorithm(self):
         
         for i in range(0, self.itterations):
-            house = get_random_component(self.grid.houses)
-            battery = random_algorithm(self.grid, house)
-            astar(self.grid, battery, house)
+            random_algorithm(self.grid)
+            #astar(self.grid, battery, house)
           
-
-            if district_solved(self.grid) == 0:
-                print("succes!")
-                break
+            #if functions.district_solved(self.grid) == 20:
+                #print("succes!")
+                #break
         print(self.grid.N_connected_houses)
