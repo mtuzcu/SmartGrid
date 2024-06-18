@@ -29,18 +29,18 @@ def print_grid(grid: object):
         (x, y) = house.cords
         ax.plot(x, y, '^', markersize=10, color='blue', label='a' if 'a' not in [text.get_text() for text in ax.texts] else "")
         #ax.text(x, y, fontsize=9, ha='center')
+    
+    # Place cables on grid
+    for cable in grid.cables:
+        x0, y0 = cable.connection1.cords
+        x1, y1 = cable.connection2.cords
+        ax.plot([x0, x1], [y0, y1], linewidth=1, color='black')
 
     # Place batteries on grid
     for battery in grid.batteries:
         (x, y) = battery.cords
         ax.plot(x, y, 's', markersize=10, color='red', label='b' if 'b' not in [text.get_text() for text in ax.texts] else "")
-        #ax.text(x, y, 'Square', fontsize=9, ha='center')
-
-    # Place cables on grid
-    for cable in grid.cables:
-        x0, y0 = cable.cords
-        x1, y1 = cable.endpoint_cords
-        ax.plot([x0, x1], [y0, y1], linewidth=1, color='black')
+        ax.text(x, y, int(battery.property), fontsize=12, ha='center', color='orange')
 
     plt.show()
     return

@@ -9,9 +9,25 @@ def random_algorithm(grid):
     """random algorithm"""
 
     # select random component to connect to
-    house = functions.get_random_component(grid.houses)
+    houses = grid.houses
+    if len(grid.unconnected_houses) > 0:
+        houses = grid.unconnected_houses
+
+    house = functions.get_random_component(houses)
     battery = functions.get_random_component(grid.batteries)
+    
+    if len(grid.unconnected_houses) > 0:
+        i = 0
+        while battery.property + house.property > 0 and i < len(grid.batteries):
+            battery = functions.get_random_component(grid.batteries)
+            i += 1
+        
     grid.connect(house, battery)
+
+    if len(house.cables) > 1:
+        grid.disconnect(functions.get_random_component(house.cables))
+    if battery.property > 0:
+        grid.disconnect(functions.get_random_component(battery.cables))
         
 # Astar
 def astar(grid: Grid, start: Node, end: Node):

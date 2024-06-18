@@ -14,12 +14,6 @@ def select_random_index(N_candidates: int) -> int:
     random_int = rand.randrange(0, N_candidates)
     return random_int
 
-def get_random_key(dictionairy: dict):
-    return rand.choice(list(dictionairy.keys()))
-
-def get_random_dictvalue(dictionairy):
-    return dictionairy[get_random_key(dictionairy)][0]
-
 def get_random_component(candidates_list: list) -> object:
     """returns a randomly chosen component from list of eligible components"""
     index = select_random_index(len(candidates_list))
@@ -29,10 +23,9 @@ def get_inverse_component(grid, component: object) -> object:
     """returns a new random component. If input component is house, returns a battery 
     and vice versa"""
     random_component = None
-    if isinstance(component, House):
+    if component.id == 0:
         random_component = get_random_component(grid.batteries)
 
-    if isinstance(component, Battery):
+    if component.id == 1:
         random_component = get_random_component(grid.houses)
-    
     return random_component
