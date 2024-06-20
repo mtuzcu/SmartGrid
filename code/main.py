@@ -16,9 +16,10 @@ if __name__ == "__main__":
     #executor = algorithm_executor(district)
     #district = executor.run_algorithm()
     hill = hillclimber(district)
-    district = hill.simulated_annealing(5000000)
-    print(district.total_cost_cables)
-    print_grid(district, 1)
+    district = hill.simulated_annealing(10000000)
+    for bat in district.batteries:
+        print(bat, bat.capacity)
+    print_grid(district)
 
   
 

@@ -8,7 +8,7 @@ def district_solved(grid: object):
         return 0
     return 1
 
-def print_grid(grid: object, c = 0):
+def print_grid(grid: object):
 
     deviate = 1
     fig, ax = plt.subplots(figsize=(8, 8))
@@ -31,12 +31,12 @@ def print_grid(grid: object, c = 0):
         #if house.distance != float('inf'):
             #ax.text(x, y, int(house.distance), fontsize=12, ha='center', color='orange')
     
-    if c == 1:
-        # Place cables on grid
-        for cable in grid.edges:
-            x0, y0 = cable.node1.cords
-            x1, y1 = cable.node2.cords
-            ax.plot([x0, x1], [y0, y1], linewidth=1, color='black')
+
+    # Place cables on grid
+    for house in grid.houses:
+        x0, y0 = house.cords
+        x1, y1 = house.connections[0].cords
+        ax.plot([x0, x1], [y0, y1], linewidth=1, color='black')
 
     # Place batteries on grid
     for battery in grid.batteries:

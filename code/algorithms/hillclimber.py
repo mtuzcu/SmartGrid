@@ -25,31 +25,29 @@ class hillclimber():
         return self.solution
 
     # Generate neighbor solution
-    def generate_neighbour(self):
+    def generate_neighbour(self, T):
         house = functions.get_random_component(self.neighbour.houses)
         if random.random() < 0.5:
             battery = functions.get_random_component(self.neighbour.batteries)
-            while battery.capacity < house.capacity:
+            while battery.capacity < house.capacity and T < 10:
                 battery = functions.get_random_component(self.neighbour.batteries)
-            current_battery = house.destination
-            self.neighbour.disconnect(house, current_battery)
+            self.neighbour.disconnect(house, house.connections[0])
             self.neighbour.connect(house, battery)
             house.state = 1
 
         else:
         # Connect house to another house
             house2 = functions.get_random_component(self.neighbour.houses)
-            if house2 != house and house + house2 <= new_solution[another_house][-1].capacity:
-                new_solution[house] = [house, another_house] + new_solution[another_house]
-                new_solution[another_house][-1].capacity -= house.output
+            if house2 != house: 
+                if house.output + house2.output <= house2.connections[0].capacity or T > 10:
+                    self.neighbour.disconnect(house, house.connections[0])
+                    self.neighbour.connect(house, house2)
     
     def store_solution(self):
         for house in self.neighbour.houses:
             if house.state == 1:
-                house1 = self.solution[house.cords]
-                battery1 = self.solution[house.destination.cords]
-                self.solution.disconnect(house1, house1.destination)
-                self.solution.connect(house1, battery1)
+                self.solution.disconnect(house, self.solution[house].connections[0])
+                self.solution.connect(house, house.connections[0])
                 house.state = 0
 
     def simulated_annealing(self, iter, T0 = 10000, alpha = 0.99):
@@ -59,15 +57,15 @@ class hillclimber():
         lowest_cost = 0
 
         for k in range(iter):
-            self.generate_neighbour()
-            delta_E = self.neighbour.total_cost_cables - self.solution.total_cost_cables
-            if delta_E < 0 or random.random() < math.exp(-delta_E / T):
+            self.generate_neighbour(T)
+            delta = self.neighbour.total_cost - self.solution.total_cost
+            if delta < 0 or random.random() < math.exp(-delta / T):
                 self.store_solution()
             
             T = T * alpha  # Cool down temperature
 
-            if lowest_cost == 0 or self.solution.total_cost_cables < lowest_cost:
-                lowest_cost = self.solution.total_cost_cables
+            if lowest_cost == 0 or self.solution.total_cost < lowest_cost:
+                lowest_cost = self.solution.total_cost
                 print(lowest_cost)
             #if T < 1e-10:  # Avoid temperature getting too low
                 #break

@@ -11,7 +11,7 @@ class Node:
     def __init__(self, cords):
         """Node on grid containing node data"""
         self.cords = cords
-        self.connections = [[],[]]
+        self.connections = [None,[]]
         self.cost = 0
         self.state = 0
 
@@ -44,32 +44,37 @@ class Grid:
         """Creates a connection between node1 (house) and node2 (house or battery)"""
         node1 = functions.get_node(self, node1)
         node2 = functions.get_node(self, node2)
-        node1.connections[0].append(node2)
+        node1.connections[0] = node2
         node2.connections[1].append(node1)
+        self.update_stats(node1, node2, 0)
 
     def disconnect(self, node1: object, node2: object):
         """Removes a connection between node1 (house) and node2 (house or battery)"""
         node1 = functions.get_node(self, node1)
         node2 = functions.get_node(self, node2)
-        node1.connections[0].remove(node2)
+        node1.connections[0] = None
         node2.connections[1].remove(node1)
+        self.update_stats(node1, node2, 1)
 
     def update_stats(self, node1, node2, sign):
         """update costs and capacity of house and battery. If sign = 0,
         adds the stats, if signs = 1, removes the stats"""
-        sign = (-1)**sign
-        node1.cost = 9 * functions.manhatten_distance(node1, node2)
-        self.total_cost += sign * node1.cost
-
-        if edge.node1.id == 1 and edge.node2.id == 2:
-            edge.node2.capacity += sign * edge.node1.capacity
-        if edge.node1.id == 2 and edge.node2.id == 1:
-            edge.node1.capacity += sign * edge.node2.capacity
-
+        if sign == 0:
+            node1.cost = 9 * functions.manhatten_distance(node1, node2)
+            node2.capacity += node1.output
+            self.total_cost += node1.cost
+        if sign == 1:
+            self.total_cost += -node1.cost
+            node1.cost = 0
+            node2.capacity += -node1.output
+            
     # MAGIC METHODS
     def __getitem__(self, coordinates):
         """allows the use of grid[x, y] to return the node at (x, y)"""
-        x, y = coordinates
+        if isinstance(coordinates, Node):
+            x, y = coordinates.cords
+        else:
+            x, y = coordinates
         return self.nodes[x][y]
 
     def __setitem__(self, coordinates, node):
