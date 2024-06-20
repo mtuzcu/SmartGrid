@@ -28,6 +28,7 @@ class hillclimber():
     def generate_neighbour(self, T):
         house = functions.get_random_component(self.neighbour.houses)
         if random.random() < 0.5:
+            # Connect house to a battery
             battery = functions.get_random_component(self.neighbour.batteries)
             while battery.capacity < house.capacity and T < 10:
                 battery = functions.get_random_component(self.neighbour.batteries)
@@ -36,7 +37,7 @@ class hillclimber():
             house.state = 1
 
         else:
-        # Connect house to another house
+            # Connect house to another house
             house2 = functions.get_random_component(self.neighbour.houses)
             if house2 != house: 
                 if house.output + house2.output <= house2.connections[0].capacity or T > 10:
@@ -50,26 +51,26 @@ class hillclimber():
                 self.solution.connect(house, house.connections[0])
                 house.state = 0
 
-    def simulated_annealing(self, iter, T0 = 10000, alpha = 0.99):
+    def simulated_annealing(self, itterations, T0 = 10000, alpha = 0.99):
         self.solution = self.generate_initial_solution()
         self.neighbour = copy.deepcopy(self.solution)
         T = T0
         lowest_cost = 0
 
-        for k in range(iter):
+        for k in range(itterations):
             self.generate_neighbour(T)
             delta = self.neighbour.total_cost - self.solution.total_cost
             if delta < 0 or random.random() < math.exp(-delta / T):
                 self.store_solution()
             
-            T = T * alpha  # Cool down temperature
+            # Temperature cooling
+            T = T * alpha 
 
             if lowest_cost == 0 or self.solution.total_cost < lowest_cost:
                 lowest_cost = self.solution.total_cost
                 print(lowest_cost)
-            #if T < 1e-10:  # Avoid temperature getting too low
+            #if T < 1e-10:  
                 #break
 
-        
         return self.solution
       
