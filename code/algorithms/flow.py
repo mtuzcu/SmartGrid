@@ -15,14 +15,10 @@ def flow_algorithm(grid):
     total_output = grid.source.capacity
     total_flow = 0
 
-    while total_flow < total_output:
+    while total_flow < total_output * 0.9:
         
         shortest_path(grid)
         if grid.sink.distance == float('inf'):
-            print(grid.sink)
-            for edge in grid.sink.edges:
-                if edge.other_node(grid.sink.parent):
-                    print(grid.sink.parent, edge.flow)
             break
         path_flow = augment_flow(grid)
         total_flow += path_flow

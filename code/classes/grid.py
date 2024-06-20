@@ -13,8 +13,6 @@ class Edge:
             self.node1 = node_1
             self.node2 = node_2
             self.cost = cost * cable_cost * functions.manhatten_distance(self.node1.cords, self.node2.cords)
-            self.capacity = min(self.node1.capacity, self.node2.capacity)
-            self.flow = 0
         
         def other_node(self, current_node):
             return self.node2 if current_node == self.node1 else self.node1
@@ -25,18 +23,9 @@ class Node:
         self.grid = grid
         self.cords = cords
         self.edges: list = []
-        self.cables: list = []
         self.capacity = 0
         self.id = 0
-
-        # algorithm attributes
-        self.h = 0
-        self.g = 0
-        self.distance = float('inf')
-        self.parent: Node = None
-    
-    def __lt__(self, other):
-        return (self.g + self.h) < (other.g + other.h)
+        self.state = 0
     
     def add_object(self, object_id, capacity = 0):
         """Adds a component to the Node. Adds  house if object_id = 1, battery 
@@ -51,7 +40,6 @@ class Node:
         if object_id == 2:
             self.grid.batteries.append(self)
        
-    
     def remove_object(self, object_id):
         """removes a cable from the node. If object_id = cable object, removes
         that specific cable. Otherwise removes all cables from node."""
@@ -70,7 +58,7 @@ class Node:
 
     def __repr__(self):
         type_list = ['House', 'Battery', 'Super Node']
-        return f"{type_list[self.id - 1]}{self.cords},{self.distance}"
+        return f"{type_list[self.id - 1]}{self.cords}"
 
 class Grid:
     # Constructor method (initializer)
@@ -79,57 +67,61 @@ class Grid:
         self.houses: list = []
         self.batteries: list = []
         self.edges: list = []
-        self.cables: list = []
         self.nodes: list = []
-        self.unconnected_houses: list = []
 
         # attributes
         self.size = 0
         self.N_houses: int
         self.N_batteries: int
-        self.N_connected_houses: int = 0
-        self.N_connected_batteries: int = 0
 
         # stats
         self.total_cost_cables = 0
     
-    def connect(self, node1: object, node2: object, type = 0, cost = 1):
+    def connect(self, node1: object, node2: object, cost = 1):
         """Creates a cable object and connects it to Node1 and Node2"""
+        node1, node2 = functions.get_node(self, node1, node2)
         new_edge = Edge(node1, node2, cost)
-        if type == 0:
-            node1.add_object(new_edge)
-            node2.add_object(new_edge)
-            self.edges.append(new_edge)
-        else:
-            self.cables.append(new_edge)
-        #self.update_stats(new_edge, 0)
+        node1.add_object(new_edge)
+        node2.add_object(new_edge)
+        self.edges.append(new_edge)
+        if node1.id == 1:
+            node1.destination = node2
+        if node2.id == 1:
+            node2.destination = node1
+        self.update_stats(new_edge, 0)
     
-    def disconnect(self, edge):
+    def disconnect(self, node1: object, node2: object):
+        node1, node2 = functions.get_node(self, node1, node2)
+        node1.destination = None
+        node2.Destination = None
+        self.remove_edge(self.find_edge(node1, node2))
+
+    def remove_edge(self, edge):
         """removes an edge"""
-        #self.update_stats(edge, 1)
+        self.update_stats(edge, 1)
         edge.node1.remove_object(edge)
         edge.node2.remove_object(edge)
         self.edges.remove(edge)
         del edge
 
-    def update_stats(self, cable, sign):
+    def find_edge(self, node1, node2):
+        for edge in node1.edges:
+            if (edge.node1 == node1 and edge.node2 == node2) or (edge.node1 == node2 and edge.node2 == node1):
+                return edge
+        print(len(node1.edges))
+        print(node1, node2)
+        print(node1.edges[0].node1, node1.edges[0].node2)
+
+    def update_stats(self, edge, sign):
         """update costs and capacity of house and battery. If sign = 0,
         adds the stats, if signs = 1, removes the stats"""
         sign = (-1)**sign
-        self.total_cable_cost += sign * cable.cost
+        self.total_cost_cables += sign * edge.cost
 
-        if cable.node1.id == 1 and cable.node2.id == 2:
-            cable.node2.capacity += sign * cable.node1.capacity
-            self.update_houses(cable.node1, sign)
-        if cable.node1.id == 2 and cable.node2.id == 1:
-            cable.node1.capacity += sign * cable.node2.capacity
-            self.update_houses(cable.node2, sign)
-
-    def update_houses(self, node, sign):
-        if sign == 1 and node in self.unconnected_houses: 
-            self.unconnected_houses.remove(node) 
-        elif node not in self.unconnected_houses: 
-            self.unconnected_houses.append(node)
+        if edge.node1.id == 1 and edge.node2.id == 2:
+            edge.node2.capacity += sign * edge.node1.capacity
+        if edge.node1.id == 2 and edge.node2.id == 1:
+            edge.node1.capacity += sign * edge.node2.capacity
 
     # MAGIC METHODS
     def __getitem__(self, coordinates):
@@ -193,7 +185,6 @@ class Grid:
 
                             # set node at (x, y) as house
                             self.nodes[x][y].add_object(1, capacity)
-                            self.unconnected_houses.append(self.nodes[x][y])
                         else:
                             x, y = map(int, row[0].split(','))
                             capacity = float(row[1])

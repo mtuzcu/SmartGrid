@@ -33,7 +33,7 @@ def print_grid(grid: object, c = 0):
     
     if c == 1:
         # Place cables on grid
-        for cable in grid.cables:
+        for cable in grid.edges:
             x0, y0 = cable.node1.cords
             x1, y1 = cable.node2.cords
             ax.plot([x0, x1], [y0, y1], linewidth=1, color='black')

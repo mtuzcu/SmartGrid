@@ -10,7 +10,7 @@ import copy
 class algorithm_executor():
 
     def __init__(self, grid) -> None:
-        self.itterations = 10
+        self.itterations = 1
         self.grid = grid
         self.best_grid = None
 
