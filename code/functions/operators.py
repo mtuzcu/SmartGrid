@@ -4,12 +4,12 @@
 import random as rand
 from classes.grid import *
 
-def get_node(grid, node1, node2):
-    if isinstance(node1, tuple):
-        node1 = grid[node1]
-    if isinstance(node2, tuple):
-        node2 = grid[node2]
-    return node1, node2
+def get_node(grid, node):
+    if isinstance(node, tuple):
+        node = grid[node]
+    if isinstance(node, object):
+        node = grid[node.cords]
+    return node
 
 def random(start = 0, end = 1) -> float:
     """returns a random float between[start, end]"""

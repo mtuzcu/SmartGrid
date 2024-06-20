@@ -7,49 +7,18 @@ import functions
 
 cable_cost = 9
 
-class Edge:
-        """cable object containing data for instanced cable. Multiple cables per node possible"""
-        def __init__(self, node_1, node_2, cost = 1):
-            self.node1 = node_1
-            self.node2 = node_2
-            self.cost = cost * cable_cost * functions.manhatten_distance(self.node1.cords, self.node2.cords)
-        
-        def other_node(self, current_node):
-            return self.node2 if current_node == self.node1 else self.node1
-    
 class Node:
-    def __init__(self, grid, cords: tuple):
+    def __init__(self, cords):
         """Node on grid containing node data"""
-        self.grid = grid
         self.cords = cords
-        self.edges: list = []
-        self.capacity = 0
-        self.id = 0
+        self.connections = [[],[]]
+        self.cost = 0
         self.state = 0
-    
-    def add_object(self, object_id, capacity = 0):
-        """Adds a component to the Node. Adds  house if object_id = 1, battery 
-        if object_id = 2 or a cable if object_id = Cable object."""
-        if isinstance(object_id, Edge):
-            self.edges.append(object_id)
-        else:
-            self.id = object_id
-            self.capacity = capacity
-        if object_id == 1:
-            self.grid.houses.append(self)
-        if object_id == 2:
-            self.grid.batteries.append(self)
-       
-    def remove_object(self, object_id):
-        """removes a cable from the node. If object_id = cable object, removes
-        that specific cable. Otherwise removes all cables from node."""
-        if isinstance(object_id, Edge):
-            self.edges.remove(object_id)
-        else:
-            self.edges = []  
 
-    def __hash__(self):
-        return hash(self.cords)
+    def modify(self, id, output, capacity):
+        self.id = id
+        self.output = output
+        self.capacity = capacity
 
     def __eq__(self, other):
         if isinstance(other, Node):
@@ -57,8 +26,8 @@ class Node:
         return False
 
     def __repr__(self):
-        type_list = ['House', 'Battery', 'Super Node']
-        return f"{type_list[self.id - 1]}{self.cords}"
+        type_list = ['node', 'House', 'Battery']
+        return f"{type_list[self.id]}{self.cords}"
 
 class Grid:
     # Constructor method (initializer)
@@ -66,57 +35,31 @@ class Grid:
         # dictionaires and lists
         self.houses: list = []
         self.batteries: list = []
-        self.edges: list = []
         self.nodes: list = []
 
-        # attributes
-        self.size = 0
-        self.N_houses: int
-        self.N_batteries: int
-
         # stats
-        self.total_cost_cables = 0
+        self.total_cost = 0
     
-    def connect(self, node1: object, node2: object, cost = 1):
-        """Creates a cable object and connects it to Node1 and Node2"""
-        node1, node2 = functions.get_node(self, node1, node2)
-        new_edge = Edge(node1, node2, cost)
-        node1.add_object(new_edge)
-        node2.add_object(new_edge)
-        self.edges.append(new_edge)
-        if node1.id == 1:
-            node1.destination = node2
-        if node2.id == 1:
-            node2.destination = node1
-        self.update_stats(new_edge, 0)
-    
+    def connect(self, node1: Node, node2: Node):
+        """Creates a connection between node1 (house) and node2 (house or battery)"""
+        node1 = functions.get_node(self, node1)
+        node2 = functions.get_node(self, node2)
+        node1.connections[0].append(node2)
+        node2.connections[1].append(node1)
+
     def disconnect(self, node1: object, node2: object):
-        node1, node2 = functions.get_node(self, node1, node2)
-        node1.destination = None
-        node2.Destination = None
-        self.remove_edge(self.find_edge(node1, node2))
+        """Removes a connection between node1 (house) and node2 (house or battery)"""
+        node1 = functions.get_node(self, node1)
+        node2 = functions.get_node(self, node2)
+        node1.connections[0].remove(node2)
+        node2.connections[1].remove(node1)
 
-    def remove_edge(self, edge):
-        """removes an edge"""
-        self.update_stats(edge, 1)
-        edge.node1.remove_object(edge)
-        edge.node2.remove_object(edge)
-        self.edges.remove(edge)
-        del edge
-
-    def find_edge(self, node1, node2):
-        for edge in node1.edges:
-            if (edge.node1 == node1 and edge.node2 == node2) or (edge.node1 == node2 and edge.node2 == node1):
-                return edge
-        print(len(node1.edges))
-        print(node1, node2)
-        print(node1.edges[0].node1, node1.edges[0].node2)
-
-    def update_stats(self, edge, sign):
+    def update_stats(self, node1, node2, sign):
         """update costs and capacity of house and battery. If sign = 0,
         adds the stats, if signs = 1, removes the stats"""
         sign = (-1)**sign
-        self.total_cost_cables += sign * edge.cost
+        node1.cost = 9 * functions.manhatten_distance(node1, node2)
+        self.total_cost += sign * node1.cost
 
         if edge.node1.id == 1 and edge.node2.id == 2:
             edge.node2.capacity += sign * edge.node1.capacity
@@ -145,7 +88,7 @@ class Grid:
         self.batteries.clear()
         self.nodes.clear()
         self.size = size_x
-        self.nodes = [[Node(self, (x, y)) for y in range(size_y)] for x in range(size_x)]
+        self.nodes = [[Node((x, y)) for y in range(size_y)] for x in range(size_x)]
     
     def fill_grid(self, district_file_path):
         """generates a grid of nodes filed with houses and batteries according
@@ -178,26 +121,24 @@ class Grid:
                     # itterate through rows of csv file 
                     for row in csv_reader:
                         nodes += 1
+
+                        # set node at (x, y) as house
                         if sign == 0:
                             x = int(row[0])
                             y = int(row[1])
-                            capacity = float(row[2])
+                            output = float(row[2])
+                            self.nodes[x][y].modify(1, output, 0)
+                            self.houses.append(self.nodes[x][y])
 
-                            # set node at (x, y) as house
-                            self.nodes[x][y].add_object(1, capacity)
+                        # set node at (x, y) as battery
                         else:
                             x, y = map(int, row[0].split(','))
                             capacity = float(row[1])
-
-                            # set node at (x, y) as battery
-                            self.nodes[x][y].add_object(2, capacity)
-            
-
-            self.N_houses = len(self.houses)
-            self.N_batteries = len(self.batteries)
+                            self.nodes[x][y].modify(2, 0, capacity)
+                            self.batteries.append(self.nodes[x][y])
             
             # if data input successful 
-            if nodes == self.N_houses + self.N_batteries:
+            if nodes == len(self.houses) + len(self.batteries):
                 print("grid successfully filled")
             else:
                 print("Error occured during filling of grid. Not all data is filled")
