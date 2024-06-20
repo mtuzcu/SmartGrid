@@ -28,6 +28,52 @@ def random_algorithm(grid):
         grid.disconnect(functions.get_random_component(house.cables))
     if battery.property > 0:
         grid.disconnect(functions.get_random_component(battery.cables))
+
+# shortest path
+def shortest_path(grid, source, sink):
+    dist = {node: float('inf') for row in grid.nodes for node in row}
+    parent = {node: None for row in grid.nodes for node in row}
+    in_queue = {node: False for row in grid.nodes for node in row}
+       
+    dist[source] = 0
+    queue = [(0, source)]
+    
+    while queue:
+        distance, u = heapq.heappop(queue)
+        if in_queue[u]:
+            continue
+        in_queue[u] = True
+        
+        for cable in u.cables:
+            if cable.node1 == u:
+                v = cable.node2
+            else:
+                v = cable.node1
+            
+            if cable.capacity > cable.flow and dist[v] > dist[u] + cable.cost:
+                dist[v] = dist[u] + cable.cost
+                parent[v] = u
+                heapq.heappush(queue, (dist[v], v))
+    
+    return dist, parent
+
+def set_edges(grid):
+    for house in grid.houses:
+        for battery in grid.batteries:
+            grid.connect(house, battery)
+            
+
+
+
+
+
+
+
+
+
+
+
+
         
 # Astar
 def astar(grid: Grid, start: Node, end: Node):

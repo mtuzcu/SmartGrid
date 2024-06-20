@@ -4,12 +4,13 @@ import random as ran
 from classes.grid import *
 import functions
 from algorithms.general import *
+from algorithms.flow import *
 import copy
 
 class algorithm_executor():
 
     def __init__(self, grid) -> None:
-        self.itterations = 10000000
+        self.itterations = 10
         self.grid = grid
         self.best_grid = None
 

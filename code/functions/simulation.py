@@ -8,7 +8,7 @@ def district_solved(grid: object):
         return 0
     return 1
 
-def print_grid(grid: object):
+def print_grid(grid: object, c = 0):
 
     deviate = 1
     fig, ax = plt.subplots(figsize=(8, 8))
@@ -28,19 +28,22 @@ def print_grid(grid: object):
     for house in grid.houses:
         (x, y) = house.cords
         ax.plot(x, y, '^', markersize=10, color='blue', label='a' if 'a' not in [text.get_text() for text in ax.texts] else "")
-        #ax.text(x, y, fontsize=9, ha='center')
+        #if house.distance != float('inf'):
+            #ax.text(x, y, int(house.distance), fontsize=12, ha='center', color='orange')
     
-    # Place cables on grid
-    for cable in grid.cables:
-        x0, y0 = cable.connection1.cords
-        x1, y1 = cable.connection2.cords
-        ax.plot([x0, x1], [y0, y1], linewidth=1, color='black')
+    if c == 1:
+        # Place cables on grid
+        for cable in grid.cables:
+            x0, y0 = cable.node1.cords
+            x1, y1 = cable.node2.cords
+            ax.plot([x0, x1], [y0, y1], linewidth=1, color='black')
 
     # Place batteries on grid
     for battery in grid.batteries:
         (x, y) = battery.cords
         ax.plot(x, y, 's', markersize=10, color='red', label='b' if 'b' not in [text.get_text() for text in ax.texts] else "")
-        ax.text(x, y, int(battery.property), fontsize=12, ha='center', color='orange')
+        #if battery.distance != float('inf'):
+            #ax.text(x, y, int(battery.distance), fontsize=12, ha='center', color='orange')
 
     plt.show()
     return
