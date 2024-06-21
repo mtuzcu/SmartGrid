@@ -1,67 +1,92 @@
 # Contains the standard algoritms 
 # Mahir Tuzcu - 11070978 
 
-import heapq
 from classes.grid import *
 import functions
 
-def random_algorithm(grid):
-    """random algorithm"""
+class cleanup():
 
-    # select random component to connect to
-    houses = grid.houses
-    if len(grid.unconnected_houses) > 0:
-        houses = grid.unconnected_houses
-
-    house = functions.get_random_component(houses)
-    battery = functions.get_random_component(grid.batteries)
-    
-    if len(grid.unconnected_houses) > 0:
-        i = 0
-        while battery.property + house.property > 0 and i < len(grid.batteries):
-            battery = functions.get_random_component(grid.batteries)
-            i += 1
+    def __init__(self, grid) -> None:
         
-    grid.connect(house, battery)
+        self.solution = grid
+        self.find_networks()
+        self.optimize_network()
 
-    if len(house.cables) > 1:
-        grid.disconnect(functions.get_random_component(house.cables))
-    if battery.property > 0:
-        grid.disconnect(functions.get_random_component(battery.cables))
+    def find_networks(self) -> None:
 
-# shortest path
-def shortest_path(grid, source, sink):
-    dist = {node: float('inf') for row in grid.nodes for node in row}
-    parent = {node: None for row in grid.nodes for node in row}
-    in_queue = {node: False for row in grid.nodes for node in row}
-       
-    dist[source] = 0
-    queue = [(0, source)]
-    
-    while queue:
-        distance, u = heapq.heappop(queue)
-        if in_queue[u]:
-            continue
-        in_queue[u] = True
-        
-        for cable in u.cables:
-            if cable.node1 == u:
-                v = cable.node2
+        # generate a list of each batteries' network containing all houses and store 
+        # this list inside battery_networks
+        self.battery_networks = []
+        for battery in self.solution.batteries:
+            current_battery_network = [battery]
+            for house in self.solution.houses:
+                if house.state == 0:
+                    if house.connections[2] == battery:
+                        current_battery_network.append(house)
+                        house.state = functions.euclidean_distance(battery, house)
+                
+            # sort the list containing current battery's network in order from closest
+            # house to battery to farthest house. 
+            self.battery_networks.append(merge_sort(current_battery_network))
+
+    def optimize_network(self) -> None:
+        for network in self.battery_networks:
+            for house in network:
+                if house.id == 1:
+                    for another_house in network:
+                        if house == another_house:
+                            break
+                        if functions.manhatten_distance(house, another_house) < functions.manhatten_distance(house, house.connections[0]):
+                            self.solution.disconnect(house, house.connections[0])
+                            self.solution.connect(house, another_house)
+            
+            for house in network:
+                if house.connections[2] == None:
+                    print(house)
+
+def merge_sort(list):
+    if len(list) > 1:
+        mid = len(list) // 2
+        left_half = list[:mid]
+        right_half = list[mid:]
+
+        merge_sort(left_half)
+        merge_sort(right_half)
+
+        i = j = k = 0
+
+        while i < len(left_half) and j < len(right_half):
+            if left_half[i].state < right_half[j].state:
+                list[k] = left_half[i]
+                i += 1
             else:
-                v = cable.node1
-            
-            if cable.capacity > cable.flow and dist[v] > dist[u] + cable.cost:
-                dist[v] = dist[u] + cable.cost
-                parent[v] = u
-                heapq.heappush(queue, (dist[v], v))
-    
-    return dist, parent
+                list[k] = right_half[j]
+                j += 1
+            k += 1
 
-def set_edges(grid):
-    for house in grid.houses:
-        for battery in grid.batteries:
-            grid.connect(house, battery)
-            
+        while i < len(left_half):
+            list[k] = left_half[i]
+            i += 1
+            k += 1
+
+        while j < len(right_half):
+            list[k] = right_half[j]
+            j += 1
+            k += 1
+
+    return list
+
+    
+
+
+
+
+
+
+
+
+
+
 
 
 

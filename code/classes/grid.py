@@ -11,7 +11,7 @@ class Node:
     def __init__(self, cords):
         """Node on grid containing node data"""
         self.cords = cords
-        self.connections = [None,[]]
+        self.connections = [None, [], None]
         self.cost = 0
         self.state = 0
 
@@ -19,6 +19,8 @@ class Node:
         self.id = id
         self.output = output
         self.capacity = capacity
+        if id == 2:
+            self.connections[2] = self
 
     def __eq__(self, other):
         if isinstance(other, Node):
@@ -46,6 +48,7 @@ class Grid:
         node2 = functions.get_node(self, node2)
         node1.connections[0] = node2
         node2.connections[1].append(node1)
+        node1.connections[2] = node2.connections[2]
         self.update_stats(node1, node2, 0)
 
     def disconnect(self, node1: object, node2: object):
@@ -54,6 +57,7 @@ class Grid:
         node2 = functions.get_node(self, node2)
         node1.connections[0] = None
         node2.connections[1].remove(node1)
+        node1.connections[2] = None
         self.update_stats(node1, node2, 1)
 
     def update_stats(self, node1, node2, sign):
@@ -67,7 +71,7 @@ class Grid:
             self.total_cost += -node1.cost
             node1.cost = 0
             node2.capacity += -node1.output
-            
+
     # MAGIC METHODS
     def __getitem__(self, coordinates):
         """allows the use of grid[x, y] to return the node at (x, y)"""

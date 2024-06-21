@@ -8,7 +8,7 @@ import copy
 import math
 import random
 
-class hillclimber():
+class annealing():
 
     def __init__(self, grid) -> None:
         self.solution = grid
@@ -51,17 +51,20 @@ class hillclimber():
                 self.solution.connect(house, house.connections[0])
                 house.state = 0
 
-    def simulated_annealing(self, itterations, T0 = 10000, alpha = 0.99):
+    def simulated_annealing(self, max_iter_without_improvement, T0 = 10000, alpha = 0.99):
         self.solution = self.generate_initial_solution()
         self.neighbour = copy.deepcopy(self.solution)
         T = T0
         lowest_cost = 0
+        i = 0
 
-        for k in range(itterations):
+        while i < max_iter_without_improvement:
+            i += 1
             self.generate_neighbour(T)
             delta = self.neighbour.total_cost - self.solution.total_cost
             if delta < 0 or random.random() < math.exp(-delta / T):
                 self.store_solution()
+                i = 0
             
             # Temperature cooling
             T = T * alpha 
