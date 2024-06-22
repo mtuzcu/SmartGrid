@@ -5,8 +5,7 @@ from classes.grid import *
 import functions
 
 class cleanup():
-
-    def __init__(self, grid) -> None:
+    def __init__(self, grid) -> object:
         
         self.solution = grid
         self.find_networks()
@@ -20,29 +19,33 @@ class cleanup():
         for battery in self.solution.batteries:
             current_battery_network = [battery]
             for house in self.solution.houses:
-                if house.state == 0:
-                    if house.connections[2] == battery:
-                        current_battery_network.append(house)
-                        house.state = functions.euclidean_distance(battery, house)
+                if house.connections[2] == battery:
+                    current_battery_network.append(house)
+                    house.distance = functions.manhatten_distance(battery, house)
                 
             # sort the list containing current battery's network in order from closest
             # house to battery to farthest house. 
             self.battery_networks.append(merge_sort(current_battery_network))
 
     def optimize_network(self) -> None:
+        #for node in self.battery_networks[0]:
+            #print(node, node.connections[2], node.state)
         for network in self.battery_networks:
-            for house in network:
-                if house.id == 1:
-                    for another_house in network:
-                        if house == another_house:
-                            break
+            for i in range(1, len(network)):
+                house = network[len(network) - i]
+                for another_house in network:
+                    if house != another_house and self.check_loop(house, another_house) == False:
                         if functions.manhatten_distance(house, another_house) < functions.manhatten_distance(house, house.connections[0]):
                             self.solution.disconnect(house, house.connections[0])
                             self.solution.connect(house, another_house)
-            
-            for house in network:
-                if house.connections[2] == None:
-                    print(house)
+    
+    def check_loop(self, node1, node2):
+        if node2.connections[0] == node1:
+            return True
+        check = self.solution.last_node(node2)
+        if check == None:
+            return True
+        return False
 
 def merge_sort(list):
     if len(list) > 1:
@@ -56,7 +59,7 @@ def merge_sort(list):
         i = j = k = 0
 
         while i < len(left_half) and j < len(right_half):
-            if left_half[i].state < right_half[j].state:
+            if left_half[i].distance < right_half[j].distance:
                 list[k] = left_half[i]
                 i += 1
             else:
@@ -75,6 +78,10 @@ def merge_sort(list):
             k += 1
 
     return list
+
+
+
+    
 
     
 

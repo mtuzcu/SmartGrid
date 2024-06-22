@@ -10,10 +10,11 @@ cable_cost = 9
 class Node:
     def __init__(self, cords):
         """Node on grid containing node data"""
+        self.id = 0
         self.cords = cords
         self.connections = [None, [], None]
         self.cost = 0
-        self.state = 0
+        self.distance = 0
 
     def modify(self, id, output, capacity):
         self.id = id
@@ -21,6 +22,12 @@ class Node:
         self.capacity = capacity
         if id == 2:
             self.connections[2] = self
+        self.base = [self.output, self.capacity, self.connections[2]]
+    
+    def reset(self):
+        self.output = self.base[0]
+        self.capacity = self.base[1]
+        self.connections = [None, [], self.base[2]]
 
     def __eq__(self, other):
         if isinstance(other, Node):
@@ -50,6 +57,7 @@ class Grid:
         node2.connections[1].append(node1)
         node1.connections[2] = node2.connections[2]
         self.update_stats(node1, node2, 0)
+        self.update_network(node1)
 
     def disconnect(self, node1: object, node2: object):
         """Removes a connection between node1 (house) and node2 (house or battery)"""
@@ -59,6 +67,7 @@ class Grid:
         node2.connections[1].remove(node1)
         node1.connections[2] = None
         self.update_stats(node1, node2, 1)
+        self.update_chain(node1, node1)
 
     def update_stats(self, node1, node2, sign):
         """update costs and capacity of house and battery. If sign = 0,
@@ -72,9 +81,36 @@ class Grid:
             node1.cost = 0
             node2.capacity += -node1.output
 
+    def update_network(self, node):
+        last_node = self.last_node(node)
+        self.update_chain(node, last_node)
+
+    def update_chain(self, node, last_node, stack = []):
+        stack.append(node)
+        if len(node.connections[1]) > 0:
+            for connected_node in node.connections[1]:
+                if connected_node not in stack:
+                    connected_node.connections[2] = last_node
+                    stack.append(connected_node)
+                    self.update_chain(connected_node, last_node, stack)
+
+    def last_node(self, node, stack = []):
+        stack.append(node)
+        node = node.connections[0]
+        if node == None:
+            return None
+        if node.id == 1:
+            if node not in stack:
+                node = self.last_node(node, stack)
+            else:
+                return None
+        return node
+
     # MAGIC METHODS
     def __getitem__(self, coordinates):
         """allows the use of grid[x, y] to return the node at (x, y)"""
+        if coordinates == None:
+            return None
         if isinstance(coordinates, Node):
             x, y = coordinates.cords
         else:
