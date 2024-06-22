@@ -4,7 +4,32 @@
 from classes.grid import *
 import functions
 
-class cleanup():
+def get_distances(grid):
+    for battery in grid.batteries:
+        for house in grid.houses:
+            if len(battery.distances) == 0 or functions.manhatten_distance(battery, house) > functions.manhatten_distance(battery, battery.distances[-1]):
+                battery.distances.append(house)
+                index = -1
+            else:
+                battery.distances.insert(index, house)
+                index += -1
+
+def longest_connections(grid):
+    houses_price = []
+    for house in grid.houses:
+        if len(houses_price) == 0 or house.distance > houses_price[-1].distance:
+            houses_price.append(house)
+            index = -1
+        else:
+            houses_price.insert(index, house)
+            index += -1
+    return houses_price
+
+    
+
+          
+
+class shortest_path():
     def __init__(self, grid) -> object:
         
         self.solution = grid
@@ -78,6 +103,7 @@ def merge_sort(list):
             k += 1
 
     return list
+
 
 
 

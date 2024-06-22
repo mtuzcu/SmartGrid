@@ -14,8 +14,8 @@ if __name__ == "__main__":
     #district = executor.run_algorithm()
     hill = algorithms.annealing(district)
     #district = hill.simulated_annealing(100000)
-    district = hill.run(1000)
-    print(district.total_cost)
+    district = hill.run2()
+    print(9 * district.total_cost)
     functions.print_grid(district)
 
 

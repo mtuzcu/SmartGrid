@@ -32,6 +32,7 @@ def print_grid(grid: object):
         (x, y) = battery.cords
         battery.distance = colors[i]
         ax.plot(x, y, 's', markersize=12, color=battery.distance, label='b' if 'b' not in [text.get_text() for text in ax.texts] else "")
+        ax.text(x, y, int(battery.capacity), fontsize=10, ha='center', color='black')
         i += 1
 
     # Place houses on grid

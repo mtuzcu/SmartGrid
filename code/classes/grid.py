@@ -15,6 +15,7 @@ class Node:
         self.connections = [None, [], None]
         self.cost = 0
         self.distance = 0
+        self.distances = []
 
     def modify(self, id, output, capacity):
         self.id = id
@@ -73,12 +74,12 @@ class Grid:
         """update costs and capacity of house and battery. If sign = 0,
         adds the stats, if signs = 1, removes the stats"""
         if sign == 0:
-            node1.cost = 9 * functions.manhatten_distance(node1, node2)
+            node1.distance = functions.manhatten_distance(node1, node2)
             node2.capacity += node1.output
-            self.total_cost += node1.cost
+            self.total_cost += node1.distance
         if sign == 1:
-            self.total_cost += -node1.cost
-            node1.cost = 0
+            self.total_cost += -node1.distance
+            node1.distance = 0
             node2.capacity += -node1.output
 
     def update_network(self, node):

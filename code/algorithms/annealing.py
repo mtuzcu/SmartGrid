@@ -106,7 +106,7 @@ class annealing():
                 i += 1
                 current = self.reset_grid(current)
                 current = self.generate_initial_solution(current)
-                general.cleanup(current)
+                general.shortest_path(current)
 
                 if lowest_cost == 0 or current.total_cost < lowest_cost:
                     lowest_cost = current.total_cost
@@ -115,3 +115,30 @@ class annealing():
                     print(lowest_cost)
 
             return solution
+    
+    def run2(self):
+        current = copy.deepcopy(self.grid)
+        mode = 1
+
+        general.get_distances(current)
+        for i in range(0, len(current.houses)):
+            for battery in current.batteries:
+                house = battery.distances[i]
+                if house.connections[0] == None:
+                    if battery.capacity > house.output:
+                        current.connect(house, battery)
+                elif mode == 1:
+                    if functions.manhatten_distance(house, battery) < functions.manhatten_distance(house, house.connections[0]):
+                        current.disconnect(house, house.connections[0])
+                        current.connect(house, battery)
+        general.shortest_path(current)
+
+        hlist = general.longest_connections(current)
+        for i in range(0, len(hlist)):
+            house1 = hlist[len(hlist) - i - 1]
+            for house2 in current.houses:
+                if house1.connections[2] != house2.connections[2] and house1.connections[0] != house1.connections[2]:
+                    if functions.manhatten_distance(house1, house2) < house.distance:
+                        current.disconnect(house1, house1.connections[0])
+                        current.connect(house1, house2)
+        return current
