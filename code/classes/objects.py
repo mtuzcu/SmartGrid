@@ -4,12 +4,14 @@ import csv
 import os
 import numpy as np
 import functions
+import copy
 
 cable_cost = 9
 
 class Node:
-    def __init__(self, cords):
+    def __init__(self, cords, grid):
         """Node on grid containing node data"""
+        self.grid = grid
         self.id = 0
         self.cords = cords
         self.connections = [None, [], None]
@@ -46,9 +48,11 @@ class Grid:
         self.houses: list = []
         self.batteries: list = []
         self.nodes: list = []
+        self.unconnected_houses: list = []
 
         # stats
         self.total_cost = 0
+        self.penalty = 0
     
     def connect(self, node1: Node, node2: Node):
         """Creates a connection between node1 (house) and node2 (house or battery)"""
@@ -57,55 +61,124 @@ class Grid:
         node1.connections[0] = node2
         node2.connections[1].append(node1)
         node1.connections[2] = node2.connections[2]
-        self.update_stats(node1, node2, 0)
-        self.update_network(node1)
+        self.update_network(0, node1)
+        self.update_stats(node1, node2, 1, 0)
 
-    def disconnect(self, node1: object, node2: object):
+    def disconnect(self, node1: object, node2 = None):
         """Removes a connection between node1 (house) and node2 (house or battery)"""
         node1 = functions.get_node(self, node1)
+        if node2 == None:
+            node2 = node1.connections[0]
         node2 = functions.get_node(self, node2)
         node1.connections[0] = None
         node2.connections[1].remove(node1)
         node1.connections[2] = None
-        self.update_stats(node1, node2, 1)
-        self.update_chain(node1, node1)
+        self.update_stats(node1, node2, 0, 1)
+        self.update_stats(node1, node2, 1, 1)
+        self.update_network(1, node1, node2)
 
-    def update_stats(self, node1, node2, sign):
+    def swap(self, node1: object, node2: object, mode = 0):
+        connect1 = copy.copy(node1.connections)
+        connect2 = copy.copy(node2.connections)
+
+        self.disconnect(node1, node1.connections[0])
+        self.disconnect(node2, node2.connections[0])
+
+        if mode == 1:
+            # reconnect upstream nodes
+            for node in connect1[1]:
+                self.disconnect(node1)
+                self.connect(node, node2)
+            for node in connect2[1]:
+                self.disconnect(node2)
+                self.connect(node, node1)
+
+        # reconnect downstream nodes
+        if connect2[0] == node1:
+            self.connect(node1, node2)
+        else:
+            self.connect(node1, connect2[0])
+        if connect1[0] == node2:
+            self.connect(node2, node1)
+        else:
+            self.connect(node2, connect1[0])
+
+    def update_stats(self, node1, node2, mode, sign):
         """update costs and capacity of house and battery. If sign = 0,
         adds the stats, if signs = 1, removes the stats"""
-        if sign == 0:
-            node1.distance = functions.manhatten_distance(node1, node2)
-            node2.capacity += node1.output
-            self.total_cost += node1.distance
-        if sign == 1:
-            self.total_cost += -node1.distance
-            node1.distance = 0
-            node2.capacity += -node1.output
+        if mode == 0:
+            if sign == 0:
+                node2.capacity += node1.output + node1.capacity
+            if sign == 1:
+                node2.capacity += -(node1.output + node1.capacity)
+        if mode == 1:
+            if sign == 0:
+                node1.distance = functions.manhatten_distance(node1, node2)
+                self.total_cost += node1.distance
+            if sign == 1:
+                self.total_cost -= node1.distance
+                node1.distance = 0
 
-    def update_network(self, node):
-        last_node = self.last_node(node)
-        self.update_chain(node, last_node)
+    def update_network(self, mode, node1, node2 = None):
+        if mode == 0:
+            #last_node = node1.connections[2]
+            last_node = self.last_node(0, node1)
+            self.update_chain(node1, last_node, 0, 0)
+            self.update_chain(node1, node1, 1, 0)
+        if mode == 1:
+            self.update_chain(node1, None, 0, 0)
+            self.update_chain(node2, node1, 1, 1)
 
-    def update_chain(self, node, last_node, stack = []):
-        stack.append(node)
-        if len(node.connections[1]) > 0:
-            for connected_node in node.connections[1]:
-                if connected_node not in stack:
-                    connected_node.connections[2] = last_node
-                    stack.append(connected_node)
-                    self.update_chain(connected_node, last_node, stack)
+    def update_chain(self, node, last_node, direction, sign, stack = None):
+        if stack == None:
+            stack = []
+        if direction == 0:
+            node.connections[2] = last_node
+            stack.append(node)
+            if len(node.connections[1]) > 0:
+                for connected_node in node.connections[1]:
+                    if connected_node not in stack:
+                        self.update_chain(connected_node, last_node, 0, 0, stack)
 
-    def last_node(self, node, stack = []):
-        stack.append(node)
-        node = node.connections[0]
-        if node == None:
+        if direction == 1:
+            next_node = node.connections[0]
+            stack.append(node)
+            if next_node != None and next_node not in stack:
+                self.update_stats(last_node, next_node, 0, sign)
+                self.update_chain(next_node, last_node, 1, sign, stack)
+
+
+    def last_node(self, mode, node, stack = None):
+        if stack == None:
+            stack = []
+        if node != None:
+            if node.id == 1:
+                if node not in stack:
+                    stack.append(node)
+                    node = self.last_node(0, node.connections[0], stack)
+                else:
+                    return None
+            if node != None and node.id == 2:
+                return node
+        else:
             return None
-        if node.id == 1:
-            if node not in stack:
-                node = self.last_node(node, stack)
-            else:
-                return None
-        return node
+        
+    def store_solution(self, grid):
+        """Copies the connections from seleted grid into the current grid"""
+        for node in grid.houses:
+            node1 = self[node]
+            if node.connections[0] != node1.connections[0]:
+                self.disconnect(node1, node1.connections[0])
+                self.connect(node1, node.connections[0])
+
+    def unconnected(self):
+        self.penalty = 0
+        self.unconnected_houses = []
+        for house in self.houses:
+            if house.connections[2] == None:
+                self.unconnected_houses.append(house)
+                self.penalty += house.output * 10
+
 
     # MAGIC METHODS
     def __getitem__(self, coordinates):
@@ -134,7 +207,7 @@ class Grid:
         self.batteries.clear()
         self.nodes.clear()
         self.size = size_x
-        self.nodes = [[Node((x, y)) for y in range(size_y)] for x in range(size_x)]
+        self.nodes = [[Node((x, y), self) for y in range(size_y)] for x in range(size_x)]
     
     def fill_grid(self, district_file_path):
         """generates a grid of nodes filed with houses and batteries according
@@ -172,16 +245,19 @@ class Grid:
                         if sign == 0:
                             x = int(row[0])
                             y = int(row[1])
+                            node = self.nodes[x][y]
                             output = float(row[2])
-                            self.nodes[x][y].modify(1, output, 0)
-                            self.houses.append(self.nodes[x][y])
+                            node.modify(1, output, 0)
+                            self.houses.append(node)
+                            self.unconnected_houses.append(node)
 
                         # set node at (x, y) as battery
                         else:
                             x, y = map(int, row[0].split(','))
+                            node = self.nodes[x][y]
                             capacity = float(row[1])
-                            self.nodes[x][y].modify(2, 0, capacity)
-                            self.batteries.append(self.nodes[x][y])
+                            node.modify(2, 0, -capacity)
+                            self.batteries.append(node)
             
             # if data input successful 
             if nodes == len(self.houses) + len(self.batteries):

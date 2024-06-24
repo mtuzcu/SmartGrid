@@ -1,110 +1,40 @@
 # Contains the standard algoritms 
 # Mahir Tuzcu - 11070978 
 
-from classes.grid import *
+from classes.objects import *
 import functions
 
-def get_distances(grid):
-    for battery in grid.batteries:
-        for house in grid.houses:
-            if len(battery.distances) == 0 or functions.manhatten_distance(battery, house) > functions.manhatten_distance(battery, battery.distances[-1]):
-                battery.distances.append(house)
-                index = -1
-            else:
-                battery.distances.insert(index, house)
-                index += -1
 
-def longest_connections(grid):
-    houses_price = []
-    for house in grid.houses:
-        if len(houses_price) == 0 or house.distance > houses_price[-1].distance:
-            houses_price.append(house)
-            index = -1
-        else:
-            houses_price.insert(index, house)
-            index += -1
-    return houses_price
+# Generate initial solution
+def innitial(grid):
+    houses = grid.houses
+    for house in houses:
+        battery = functions.get_viable_batteries(house)[0]
+        grid.connect(house, battery)
+    return grid
 
-    
+def proxy_solution(grid):
+      for battery in grid.batteries:
+          battery.distances = functions.get_distances(battery, 1)
+      for i in range(1, len(grid.houses)):
+            for battery in grid.batteries:
+                house = battery.distances[i]
+                if functions.viability(house, battery):
+                    if house.connections[0] == None:
+                        grid.connect(house, battery)
+                    elif functions.improvement(house, battery):
+                        grid.disconnect(house, house.connections[0])
+                        grid.connect(house, battery)
 
-          
-
-class shortest_path():
-    def __init__(self, grid) -> object:
-        
-        self.solution = grid
-        self.find_networks()
-        self.optimize_network()
-
-    def find_networks(self) -> None:
-
-        # generate a list of each batteries' network containing all houses and store 
-        # this list inside battery_networks
-        self.battery_networks = []
-        for battery in self.solution.batteries:
-            current_battery_network = [battery]
-            for house in self.solution.houses:
-                if house.connections[2] == battery:
-                    current_battery_network.append(house)
-                    house.distance = functions.manhatten_distance(battery, house)
-                
-            # sort the list containing current battery's network in order from closest
-            # house to battery to farthest house. 
-            self.battery_networks.append(merge_sort(current_battery_network))
-
-    def optimize_network(self) -> None:
-        #for node in self.battery_networks[0]:
-            #print(node, node.connections[2], node.state)
-        for network in self.battery_networks:
-            for i in range(1, len(network)):
-                house = network[len(network) - i]
-                for another_house in network:
-                    if house != another_house and self.check_loop(house, another_house) == False:
-                        if functions.manhatten_distance(house, another_house) < functions.manhatten_distance(house, house.connections[0]):
-                            self.solution.disconnect(house, house.connections[0])
-                            self.solution.connect(house, another_house)
-    
-    def check_loop(self, node1, node2):
-        if node2.connections[0] == node1:
-            return True
-        check = self.solution.last_node(node2)
-        if check == None:
-            return True
-        return False
-
-def merge_sort(list):
-    if len(list) > 1:
-        mid = len(list) // 2
-        left_half = list[:mid]
-        right_half = list[mid:]
-
-        merge_sort(left_half)
-        merge_sort(right_half)
-
-        i = j = k = 0
-
-        while i < len(left_half) and j < len(right_half):
-            if left_half[i].distance < right_half[j].distance:
-                list[k] = left_half[i]
-                i += 1
-            else:
-                list[k] = right_half[j]
-                j += 1
-            k += 1
-
-        while i < len(left_half):
-            list[k] = left_half[i]
-            i += 1
-            k += 1
-
-        while j < len(right_half):
-            list[k] = right_half[j]
-            j += 1
-            k += 1
-
-    return list
-
-
+def untangle(grid):
+    hlist = functions.longest_connections(grid)
+    for i in range(0, len(hlist)):
+        house1 = hlist[len(hlist) - i - 1]
+        for house2 in grid.houses:
+            if house1.connections[2] != house2.connections[2] and house1.connections[0] != house1.connections[2]:
+                if functions.improvement(house1, house2):
+                    grid.disconnect(house1, house1.connections[0])
+                    grid.connect(house1, house2)
 
 
     
@@ -115,6 +45,30 @@ def merge_sort(list):
 
 
 
+
+
+
+
+
+def testo(district):
+    h = district.houses[0]
+    h2 = district.houses[1]
+    h3 = district.houses[2]
+    h4 = district.houses[3]
+    h5 = district.houses[4]
+    b = district.batteries[0]
+  
+    district.connect(h, b)
+    district.connect(h2, h)
+    district.connect(h3, h2)
+    district.disconnect(h, b)
+    district.connect(h2,b)
+    print('-----')
+
+    print(h, h.capacity, h.output, h.connections)
+    print(h2, h2.capacity, h2.output, h2.connections)
+    print(h3, h3.capacity, h3.output, h3.connections)
+    print(b, b.capacity, b.output, b.connections)
 
 
 

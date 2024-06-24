@@ -37,19 +37,20 @@ def print_grid(grid: object):
 
     # Place houses on grid
     for house in grid.houses:
+        if house.connections[2] == None:
+            color1 = 'black'
+        else:
+            color1 = house.connections[2].distance
         (x, y) = house.cords
-        ax.plot(x, y, '^', markersize=10, color=house.connections[2].distance, label='a' if 'a' not in [text.get_text() for text in ax.texts] else "")
-        #if house.distance != float('inf'):
-            #ax.text(x, y, int(house.distance), fontsize=12, ha='center', color='orange')
+        ax.plot(x, y, '^', markersize=10, color=color1, label='a' if 'a' not in [text.get_text() for text in ax.texts] else "")
+        if house.connections[0] != None:
+            x0, y0 = house.cords
+            x1, y1 = house.connections[0].cords
+            ax.plot([x0, x1], [y0, y1], linewidth=1, color=color1)
+            #if house.distance != float('inf'):
+                #ax.text(x, y, int(house.distance), fontsize=12, ha='center', color='orange')
 
-    # Place cables on grid
-    for house in grid.houses:
-        x0, y0 = house.cords
-        x1, y1 = house.connections[0].cords
-        ax.plot([x0, x1], [y0, y1], linewidth=1, color=house.connections[2].distance)
-
-        #if battery.distance != float('inf'):
-            #ax.text(x, y, int(battery.distance), fontsize=12, ha='center', color='orange')
+   
 
     plt.show()
     return

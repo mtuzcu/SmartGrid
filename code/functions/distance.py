@@ -4,6 +4,21 @@
 import numpy as np
 import math
 
+def dynamic_list(item, key, list):
+    if list == None:
+        list = [[], [], -1]
+    if len(list[0]) > 0:
+        last = list[1][list[2]]
+    if len(list[0]) == 0 or key > last:
+        list[0].append(item)
+        list[1].append(key)
+        list[2] = -1
+    else:
+        list[0].insert(list[2], item)
+        list[1].insert(list[2], key)
+        list[2] += -1
+    return list
+
 def cord_filter(input_object) -> tuple:
     """takes a tuple or object and returns (x, y) coordinates if input is an object
     or returns input if input was already a (x, y) tuple"""
@@ -38,6 +53,19 @@ def get_neighbours(cords, size):
             neighbours.append((next_x, next_y))
     return neighbours
 
+def get_distances(node0, id):
+    """returns the distances between node0 and all nodes of type (id = 1; house), (id = 2; battery)"""
+    if id == 1:
+        node_list = node0.grid.houses
+    if id == 2:
+        node_list = node0.grid.batteries
+    distances = None
+    for node1 in node_list:
+        if node1 != node0:
+            key = manhatten_distance(node0, node1)
+            distances = dynamic_list(node1, key, distances)
+    return distances[0]
+         
 
     
 
