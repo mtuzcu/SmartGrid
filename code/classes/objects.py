@@ -14,7 +14,7 @@ class Node:
         self.grid = grid
         self.id = 0
         self.cords = cords
-        self.connections = [None, [], None]
+        self.connections = [None, [], None, []]
         self.cost = 0
         self.distance = 0
         self.distances = []
@@ -25,12 +25,13 @@ class Node:
         self.capacity = capacity
         if id == 2:
             self.connections[2] = self
+            self.connections[3].append(self)
         self.base = [self.output, self.capacity, self.connections[2]]
     
     def reset(self):
         self.output = self.base[0]
         self.capacity = self.base[1]
-        self.connections = [None, [], self.base[2]]
+        self.connections = [None, [], self.base[2], [self.base[2]]]
 
     def __eq__(self, other):
         if isinstance(other, Node):
@@ -61,6 +62,8 @@ class Grid:
         node1.connections[0] = node2
         node2.connections[1].append(node1)
         node1.connections[2] = node2.connections[2]
+        if node1.connections[2] != None:
+            node1.connections[2].connections[3].append(node1)
         self.update_network(0, node1)
         self.update_stats(node1, node2, 1, 0)
 
@@ -70,6 +73,8 @@ class Grid:
         if node2 == None:
             node2 = node1.connections[0]
         node2 = functions.get_node(self, node2)
+        if node1.connections[2] != None:
+            node1.connections[2].connections[3].remove(node1)
         node1.connections[0] = None
         node2.connections[1].remove(node1)
         node1.connections[2] = None
@@ -126,19 +131,20 @@ class Grid:
             self.update_chain(node1, last_node, 0, 0)
             self.update_chain(node1, node1, 1, 0)
         if mode == 1:
-            self.update_chain(node1, None, 0, 0)
+            self.update_chain(node1, None, 0, 1)
             self.update_chain(node2, node1, 1, 1)
 
     def update_chain(self, node, last_node, direction, sign, stack = None):
         if stack == None:
             stack = []
         if direction == 0:
+            functions.update_battery_network(sign, last_node, node)
             node.connections[2] = last_node
             stack.append(node)
             if len(node.connections[1]) > 0:
                 for connected_node in node.connections[1]:
                     if connected_node not in stack:
-                        self.update_chain(connected_node, last_node, 0, 0, stack)
+                        self.update_chain(connected_node, last_node, 0, sign, stack)
 
         if direction == 1:
             next_node = node.connections[0]

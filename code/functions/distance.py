@@ -10,8 +10,8 @@ def dynamic_list(item, key, list):
     if len(list[0]) > 0:
         last = list[1][list[2]]
     if len(list[0]) == 0 or key > last:
-        list[0].append(item)
-        list[1].append(key)
+        list[0].insert(list[2], item)
+        list[1].insert(list[2], key)
         list[2] = -1
     else:
         list[0].insert(list[2], item)

@@ -55,11 +55,8 @@ def get_viable_batteries(house) -> list:
             viable_batteries = functions.dynamic_list(battery, key, viable_batteries)
     return viable_batteries[0]
 
-def get_viable_swaps(grid):
-    for house in grid.houses:
-        for another_house in grid.houses:
-            if house != another_house and house.connections[0] != another_house:
-                
+
+
 
 
 
