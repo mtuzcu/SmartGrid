@@ -12,7 +12,6 @@ def print_grid(grid: object):
 
     colors = ['#FF0000', '#00FF00', '#0000FF', '#FFA500', '#800080', '#FF00FF']
 
-    grid.size = 50
     deviate = 1
     fig, ax = plt.subplots(figsize=(8, 8))
     ax.set_xlim(-deviate, grid.size + deviate)
@@ -28,18 +27,17 @@ def print_grid(grid: object):
     ax.grid(True)
 
     # Place batteries on grid
+    i = 0
     for battery in grid.batteries:
         (x, y) = battery.cords
-        ax.plot(x, y, 's', markersize=12, color=colors[battery.id], label='b' if 'b' not in [text.get_text() for text in ax.texts] else "")
+        battery.distance = colors[i]
+        ax.plot(x, y, 's', markersize=12, color=battery.distance, label='b' if 'b' not in [text.get_text() for text in ax.texts] else "")
         ax.text(x, y, int(battery.capacity), fontsize=10, ha='center', color='black')
-
+        i += 1
 
     # Place houses on grid
     for house in grid.houses:
-        if house.battery != None:
-            color1 = colors[house.battery.id]
-        else:
-            color1 = 'black'
+        color1 = colors[house.battery.id]
         (x, y) = house.cords
         ax.plot(x, y, '^', markersize=10, color=color1, label='a' if 'a' not in [text.get_text() for text in ax.texts] else "")
     
@@ -49,8 +47,7 @@ def print_grid(grid: object):
             color1 = colors[battery.id]
             x0, y0 = cable.cords1
             x1, y1 = cable.cords2
-            d = 0.1 * battery.id
-            ax.plot([x0, x1], [y0 + d, y1 + d], linewidth=1, color=color1)
+            ax.plot([x0, x1], [y0, y1], linewidth=1, color=color1)
 
    
 

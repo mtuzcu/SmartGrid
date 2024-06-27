@@ -2,7 +2,6 @@
 # Mahir Tuzcu - 11070978 
 
 import heapq
-from classes.objects import *
 import functions
 import copy
 import math

@@ -60,10 +60,9 @@ class Grid:
         node1 = functions.get_node(self, node1)
         node2 = functions.get_node(self, node2)
         node1.connections[0] = node2
-        node2.connections[1].append(node1)
+        if node1 not in node2.connections[1]:
+            node2.connections[1].append(node1)
         node1.connections[2] = node2.connections[2]
-        if node1.connections[2] != None:
-            node1.connections[2].connections[3].append(node1)
         self.update_network(0, node1)
         self.update_stats(node1, node2, 1, 0)
 
@@ -73,8 +72,6 @@ class Grid:
         if node2 == None:
             node2 = node1.connections[0]
         node2 = functions.get_node(self, node2)
-        if node1.connections[2] != None:
-            node1.connections[2].connections[3].remove(node1)
         node1.connections[0] = None
         node2.connections[1].remove(node1)
         node1.connections[2] = None
@@ -114,8 +111,10 @@ class Grid:
         if mode == 0:
             if sign == 0:
                 node2.capacity += node1.output + node1.capacity
+                node2.capacity = round(node2.capacity, 1)
             if sign == 1:
                 node2.capacity += -(node1.output + node1.capacity)
+                node2.capacity = round(node2.capacity, 1)
         if mode == 1:
             if sign == 0:
                 node1.distance = functions.manhatten_distance(node1, node2)
@@ -126,25 +125,33 @@ class Grid:
 
     def update_network(self, mode, node1, node2 = None):
         if mode == 0:
-            #last_node = node1.connections[2]
-            last_node = self.last_node(0, node1)
+            #last_node = node2.connections[2]
+            last_node = self.last_node(node1)
             self.update_chain(node1, last_node, 0, 0)
             self.update_chain(node1, node1, 1, 0)
+            if last_node != None:
+                last_node.connections[3] = self.update_chain(last_node, None, 0, 0, None, 1)
+
         if mode == 1:
             self.update_chain(node1, None, 0, 1)
             self.update_chain(node2, node1, 1, 1)
 
-    def update_chain(self, node, last_node, direction, sign, stack = None):
+            if node2.connections[2] != None:
+                node2.connections[2].connections[3] = self.update_chain(node2.connections[2], None, 0, 0, None, 1)
+
+    def update_chain(self, node, last_node, direction, sign, stack = None, m = 0):
         if stack == None:
             stack = []
         if direction == 0:
-            functions.update_battery_network(sign, last_node, node)
-            node.connections[2] = last_node
+            if m == 0:
+                node.connections[2] = last_node
             stack.append(node)
             if len(node.connections[1]) > 0:
                 for connected_node in node.connections[1]:
                     if connected_node not in stack:
-                        self.update_chain(connected_node, last_node, 0, sign, stack)
+                        self.update_chain(connected_node, last_node, 0, sign, stack, m)
+            if m == 1:
+                return stack
 
         if direction == 1:
             next_node = node.connections[0]
@@ -154,20 +161,19 @@ class Grid:
                 self.update_chain(next_node, last_node, 1, sign, stack)
 
 
-    def last_node(self, mode, node, stack = None):
+    def last_node(self, node, stack = None):
         if stack == None:
             stack = []
         if node != None:
             if node.id == 1:
                 if node not in stack:
                     stack.append(node)
-                    node = self.last_node(0, node.connections[0], stack)
+                    node = self.last_node(node.connections[0], stack)
                 else:
                     return None
-            if node != None and node.id == 2:
+            elif node.id == 2:
                 return node
-        else:
-            return None
+        return node
         
     def store_solution(self, grid):
         """Copies the connections from seleted grid into the current grid"""
@@ -252,7 +258,7 @@ class Grid:
                             x = int(row[0])
                             y = int(row[1])
                             node = self.nodes[x][y]
-                            output = float(row[2])
+                            output = round(float(row[2]), 1)
                             node.modify(1, output, 0)
                             self.houses.append(node)
                             self.unconnected_houses.append(node)
@@ -261,7 +267,7 @@ class Grid:
                         else:
                             x, y = map(int, row[0].split(','))
                             node = self.nodes[x][y]
-                            capacity = float(row[1])
+                            capacity = round(float(row[1]), 1)
                             node.modify(2, 0, -capacity)
                             self.batteries.append(node)
             

@@ -3,7 +3,7 @@
 
 import functions
 import random as rand
-from classes.objects import *
+import classes
 
 def get_node(grid, node):
     if isinstance(node, tuple):
@@ -14,10 +14,14 @@ def get_node(grid, node):
 
 def unique_nodes(grid):
     """gets 2 random and unique house nodes from grid"""
-    house1 = functions.get_random_component(grid.houses)
-    house2 = functions.get_random_component(grid.houses)
+    if isinstance(grid, list):
+        list1 = grid
+    else:
+        list1 = grid.houses
+    house1 = functions.get_random_component(list1)
+    house2 = functions.get_random_component(list1)
     while house1 == house2:
-        house2 = functions.get_random_component(grid.houses)
+        house2 = functions.get_random_component(list1)
     return house1, house2
 
 def random(start = 0, end = 1) -> float:
@@ -46,11 +50,11 @@ def get_inverse_component(grid, component: object) -> object:
         random_component = get_random_component(grid.houses)
     return random_component
 
-def get_viable_batteries(house) -> list:
+def get_viable_batteries(grid, house) -> list:
     """returns a list of all battery nodes that can accomodate house"""
     viable_batteries = None
-    for battery in house.grid.batteries:
-        if battery.capacity + house.output + house.capacity < 0:
+    for battery in grid.batteries:
+        if battery.capacity + house.output <= 0:
             key = functions.manhatten_distance(house, battery)
             viable_batteries = functions.dynamic_list(battery, key, viable_batteries)
     return viable_batteries[0]

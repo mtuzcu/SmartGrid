@@ -1,7 +1,6 @@
 # Contains the standard algoritms 
 # Mahir Tuzcu - 11070978 
 
-from classes.objects import *
 import functions
 
 
@@ -71,50 +70,6 @@ def testo(district):
     print(b, b.capacity, b.output, b.connections)
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        
-# Astar
-def astar(grid: Grid, start: Node, end: Node):
-    """astar aglorithm"""
-    open_set = []
-    heapq.heappush(open_set, start)
-
-    while open_set:
-        current = heapq.heappop(open_set)
-        if current.cords == end.cords:
-            print("cable set")
-        
-        for (x1, y1) in get_neighbours(current.cords, grid.size):
-            next_node = grid[x1][y1]
-            g_value = calc_g(start, next_node)
-            if g_value > next_node.g:
-                next_node.g = g_value
-                next_node.h = calc_h(next_node, end)
-                next_node.parent = current
-                heapq.heappush(open_set, next_node)
-
-def calc_g(node_start, node_current):
-    return manhatten_distance(node_start, node_current) * 9
-
-def calc_h(node_current, node_end):
-    return euclidean_distance(node_current, node_end)
-
-def calc_f(g, h):
-    return g + h
 
 
     

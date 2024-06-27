@@ -65,7 +65,15 @@ def get_distances(node0, id):
             key = manhatten_distance(node0, node1)
             distances = dynamic_list(node1, key, distances)
     return distances[0]
-         
+
+def get_cable_distances(grid):
+    new_list = None
+    for house in grid.houses:
+        key = house.distance
+        new_list = dynamic_list(house, key, new_list)
+    grid.houses = new_list[0]
+
+
 
     
 
