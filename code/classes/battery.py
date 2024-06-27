@@ -19,7 +19,7 @@ class Battery:
         return False
 
     def update(self):
-        data = functions.scan_network(self)
+        data = functions.analyse_network(self)
         if data != False:
             self.apply_data(data)
 

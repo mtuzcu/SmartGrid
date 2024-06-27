@@ -27,32 +27,34 @@ def print_grid(grid: object):
     ax.grid(which='minor', color='gray', linestyle='-', linewidth=0.2)
     ax.grid(True)
 
+    placed_houses = set()
+    placed_cables = set()
+
     # Place batteries on grid
     for battery in grid.batteries:
+        network_color = colors[battery.id]
         (x, y) = battery.cords
-        ax.plot(x, y, 's', markersize=12, color=colors[battery.id], label='b' if 'b' not in [text.get_text() for text in ax.texts] else "")
+        ax.plot(x, y, 's', markersize=12, color=network_color, label='b' if 'b' not in [text.get_text() for text in ax.texts] else "")
         ax.text(x, y, int(battery.capacity), fontsize=10, ha='center', color='black')
 
-
-    # Place houses on grid
-    for house in grid.houses:
-        if house.battery != None:
-            color1 = colors[house.battery.id]
-        else:
-            color1 = 'black'
-        (x, y) = house.cords
-        ax.plot(x, y, '^', markersize=10, color=color1, label='a' if 'a' not in [text.get_text() for text in ax.texts] else "")
+        # place houses on grid:
+        for house in battery.houses:
+            placed_houses.add(house)
+            (x, y) = house.cords
+            ax.plot(x, y, '^', markersize=10, color=network_color, label='a' if 'a' not in [text.get_text() for text in ax.texts] else "")
     
-    # cables
-    for battery in grid.batteries:
+        # place cables
         for cable in battery.network:
-            color1 = colors[battery.id]
-            x0, y0 = cable.cords1
-            x1, y1 = cable.cords2
+            x0, y0 = cable.node1.cords
+            x1, y1 = cable.node2.cords
             d = 0.1 * battery.id
-            ax.plot([x0, x1], [y0 + d, y1 + d], linewidth=1, color=color1)
+            ax.plot([x0, x1], [y0 + d, y1 + d], linewidth=1, color=network_color)
 
+    # place unconnected houses on grid:
+        for house in grid.houses:
+            if house not in placed_houses:
+                (x, y) = house.cords
+                ax.plot(x, y, '^', markersize=10, color='black', label='a' if 'a' not in [text.get_text() for text in ax.texts] else "")
    
-
     plt.show()
     return

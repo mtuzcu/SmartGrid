@@ -48,6 +48,8 @@ class Grid:
     
     def connect(self, component1, component2 = None): 
         cable = False
+        if functions.legal_connection(component1, component2) == False:
+            return False
         if isinstance(component1, (classes.House, classes.Battery)) and isinstance(component2, (classes.House, classes.Battery)):
             cable = classes.Cable(component1, component2)
         elif isinstance(component1, classes.Cable):

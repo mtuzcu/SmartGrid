@@ -1,5 +1,6 @@
 
 import functions
+import random
 import classes
 
 class random:
@@ -8,7 +9,7 @@ class random:
         self.grid = grid
         self.innitial(self.grid)
         self.run(self.grid)
-        #functions.print_grid(self.grid)
+        functions.print_grid(self.grid)
 
     def innitial(self, grid):
         while grid.solved() == False:
@@ -30,8 +31,10 @@ class random:
     def run(self, grid, iter = 10000):
         lowest_cost = 0
         for i in range(0, iter):
-            
-            functions.
+
+            functions.mutate(grid)
+            print(len(grid.cables))
+            grid.solved()
 
             if lowest_cost == 0 or grid.total_cost < lowest_cost:
                 lowest_cost = grid.total_cost

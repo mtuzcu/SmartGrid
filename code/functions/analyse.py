@@ -71,22 +71,28 @@ def get_viable_batteries(grid, house) -> list:
 def find_cable(node1, node2):
     """Returns the cable connecting node1 and node2. Returns false if it 
     does not exist"""
-    temp_cable = functions.Cable(node1, node2)
-    if temp_cable in node1.cables:
-        for cable in node1.cables:
-            if cable == temp_cable:
-                return cable
+    if check_nodes(node1, node2) == True:
+        if node1 != node2:
+            temp_cable = classes.Cable(node1, node2)
+            if temp_cable in node1.cables:
+                for cable in node1.cables:
+                    if cable == temp_cable:
+                        return cable
     return None
+
+def get_random_cables(grid):
+    cable_list = list(grid.cables)
+    cable1, cable2 = rand.sample(cable_list, 2)
+    return cable1, cable2
 
 def scan_network(node, data = False):
     if data == False:
         # data contains the following: [capacity, cost, cables, houses, battery]
         data = [0, 0, set(), set(), None]
+    if len(node.cables) == 0:
+        return False
     for cable in node.cables:
         if data != False:
-            if cable not in data[2]:
-                data[2].add(cable) 
-                data[1] += cable.cost
             if node not in data[3]:
                 if isinstance(node, classes.Battery):
                     if data[4] == None or data[4] == node:
@@ -95,10 +101,42 @@ def scan_network(node, data = False):
                         return False
                 else:
                     data[0] += node.output
-                    data[3].add(node)
+                data[3].add(node)
+                
+            if cable not in data[2]:
+                data[2].add(cable) 
+                data[1] += cable.cost
                 next_node = cable.other(node)
                 data = scan_network(next_node, data) 
     return data
+
+def analyse_network(node):
+    data = scan_network(node)
+    if data != False:
+        if data[4] != None:
+            if data[4] in data[3]:
+                data[3].remove(data[4])
+            
+            # check capacity of battery
+            if data[4].max_capacity + data[0] <= 0:
+                return data
+    return False
+
+def check_nodes(component1, component2):
+    """returns True if both component1 and component2 are either a Battery or House object. 
+    Otherwise returns False"""
+    if isinstance(component1, (classes.House, classes.Battery)) and isinstance(component2, (classes.House, classes.Battery)):
+        return True
+    return False
+
+def legal_connection(node1, node2):
+    if isinstance(node1, classes.Battery) and isinstance(node2, classes.Battery):
+        return False
+    if node1 == node2:
+        return False
+    if isinstance(find_cable(node1, node2), classes.Cable):
+        return False
+    return True
 
 def next_point(a, b):
     if a < b:

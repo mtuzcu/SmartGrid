@@ -18,7 +18,7 @@ class Cable:
 
     def __eq__(self, other):
         if isinstance(other, Cable):
-            return ((self.node1 == other.node21 or self.node1 == other.node2) and (self.node2 == other.node1 or self.node2 == other.node2))
+            return ((self.node1 == other.node1 or self.node1 == other.node2) and (self.node2 == other.node1 or self.node2 == other.node2))
         return False
     
     def __hash__(self):
