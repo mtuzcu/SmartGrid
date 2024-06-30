@@ -46,37 +46,32 @@ class Grid:
             return True
         return False
     
+    def update(self):
+        for battery in self.batteries:
+            battery.update()
+    
     def connect(self, component1, component2 = None): 
-        cable = False
-        if functions.legal_connection(component1, component2) == False:
-            return False
         if isinstance(component1, (classes.House, classes.Battery)) and isinstance(component2, (classes.House, classes.Battery)):
             cable = classes.Cable(component1, component2)
         elif isinstance(component1, classes.Cable):
             cable = component1
             component1 = cable.node1
             component2 = cable.node2
-        if cable != False:
-            if cable not in component1.cables and cable not in component2.cables:
-                component1.cables.add(cable)
-                component2.cables.add(cable)
-                self.cables.add(cable)
-        return cable
+        if cable not in component1.cables and cable not in component2.cables:
+            component1.cables.add(cable)
+            component2.cables.add(cable)
+            self.cables.add(cable)
+            return cable
+        print('error')
+        return False
 
-    def disconnect(self, component1, component2 = None):  
+    def disconnect(self, cable):  
         # remove connection referenced or connection connecting components
-        cable = False
-        if isinstance(component1, (classes.House, classes.Battery)) and isinstance(component2, (classes.House, classes.Battery)):
-            cable = functions.find_cable(component1, component2)
-        elif isinstance(component1, classes.Cable):
-            cable = component1
-            component1 = cable.node1
-            component2 = cable.node2
-        if cable != False:
-            if cable in component1.cables and cable in component2.cables:
-                component1.cables.remove(cable)
-                component2.cables.remove(cable)
-                self.cables.remove(cable)
+        component1 = cable.node1
+        component2 = cable.node2
+        component1.cables.remove(cable)
+        component2.cables.remove(cable)
+        self.cables.remove(cable)
         return cable
     
     def reset(self):

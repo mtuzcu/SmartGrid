@@ -19,16 +19,15 @@ class Battery:
         return False
 
     def update(self):
-        data = functions.analyse_network(self)
+        data = functions.scan_network(self)
         if data != False:
             self.apply_data(data)
 
     def apply_data(self, data):
-        if data != False:
-            self.capacity = self.max_capacity + data[0]
-            self.cost = data[1]
-            self.network = data[2]
-            self.houses = data[3]
+        self.capacity = self.max_capacity + data[0]
+        self.cost = data[1]
+        self.network = data[2]
+        self.houses = data[3]
 
     def reset(self):
         self.capacity = self.max_capacity

@@ -85,42 +85,23 @@ def get_random_cables(grid):
     cable1, cable2 = rand.sample(cable_list, 2)
     return cable1, cable2
 
-def scan_network(node, data = False):
-    if data == False:
-        # data contains the following: [capacity, cost, cables, houses, battery]
-        data = [0, 0, set(), set(), None]
+def scan_network(node, data = None):
+    if data == None:
+        # data contains the following: [output, cost, cables, houses]
+        data = [0, 0, set(), set()]
     if len(node.cables) == 0:
         return False
+    if node not in data[3]:
+        if isinstance(node, classes.Battery) == False:
+            data[0] += node.output
+            data[3].add(node)
     for cable in node.cables:
-        if data != False:
-            if node not in data[3]:
-                if isinstance(node, classes.Battery):
-                    if data[4] == None or data[4] == node:
-                        data[4] = node
-                    else: 
-                        return False
-                else:
-                    data[0] += node.output
-                data[3].add(node)
-                
-            if cable not in data[2]:
-                data[2].add(cable) 
-                data[1] += cable.cost
-                next_node = cable.other(node)
-                data = scan_network(next_node, data) 
+        if cable not in data[2]:
+            data[2].add(cable) 
+            data[1] += cable.cost
+            next_node = cable.other(node)
+            data = scan_network(next_node, data) 
     return data
-
-def analyse_network(node):
-    data = scan_network(node)
-    if data != False:
-        if data[4] != None:
-            if data[4] in data[3]:
-                data[3].remove(data[4])
-            
-            # check capacity of battery
-            if data[4].max_capacity + data[0] <= 0:
-                return data
-    return False
 
 def check_nodes(component1, component2):
     """returns True if both component1 and component2 are either a Battery or House object. 
@@ -134,9 +115,31 @@ def legal_connection(node1, node2):
         return False
     if node1 == node2:
         return False
-    if isinstance(find_cable(node1, node2), classes.Cable):
-        return False
     return True
+
+def legal_option(options, option):
+    legal = True
+    if cable_equal(option[0][0], option[1][0]) == True:
+        legal = False
+    if legal_connection(option[0][0]) == False or legal_connection(option[1][0]) == False:
+        legal = False
+    if legal == True:
+        options.append(option)
+    return options
+
+def cable_equal(cable1, cable2):
+    if cable1.node1 == cable2.node1 and cable1.node2 == cable2.node2 or cable1.node1 == cable2.node2 and cable1.node2 == cable2.node1:
+        return True
+    return False
+
+def cable_unique(cable):
+    node1 = cable.node1
+    node2 = cable.node2
+
+    if cable not in node1.cables and cable not in node2.cables:
+        return True
+    return False
+        
 
 def next_point(a, b):
     if a < b:

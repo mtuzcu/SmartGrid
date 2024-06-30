@@ -8,6 +8,8 @@ class Cable:
         self.node1 = node1
         self.node2 = node2
         self.cost = functions.manhatten_distance(node1, node2)
+        self._unique_id = Cable._counter
+        Cable._counter += 1
     
     def other(self, node):
         if node == self.node1:
@@ -15,12 +17,12 @@ class Cable:
         if node == self.node2:
             return self.node1
         return None
-
+    
     def __eq__(self, other):
         if isinstance(other, Cable):
             return ((self.node1 == other.node1 or self.node1 == other.node2) and (self.node2 == other.node1 or self.node2 == other.node2))
         return False
-    
+
     def __hash__(self):
         return hash(frozenset([self.node1, self.node2]))
     
