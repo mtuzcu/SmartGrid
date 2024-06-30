@@ -5,7 +5,7 @@ import functions
 import random as rand
 import classes
 
-def manhatten_distance(node1, node2) -> int:
+def manhattan_distance(node1, node2) -> int:
     """returns manhatten distance between node1 and node2. Input can either be an object or
     the (x, y) coordinates in tuple format of the object"""
     if node1 == None or node2 == None:
@@ -67,6 +67,12 @@ def get_viable_batteries(grid, house) -> list:
         if battery.viability(house) == True:
             viable_batteries.append(battery)
     return viable_batteries
+
+def get_equivalent(grid, node):
+    if isinstance(node, classes.House):
+        return grid.house_dict[node.cords]
+    if isinstance(node, classes.Battery):
+        return grid.battery_dict[node.cords]
 
 def find_cable(node1, node2):
     """Returns the cable connecting node1 and node2. Returns false if it 

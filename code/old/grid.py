@@ -4,7 +4,6 @@ import csv
 import os
 import classes
 import functions
-import copy
 
 cable_cost = 9
 
@@ -14,6 +13,7 @@ class Grid:
         # dictionaires and lists
         self.houses: list = []
         self.batteries: list = []
+        self.cables = set()
 
         # stats
         self.total_flow = 0
@@ -23,20 +23,11 @@ class Grid:
 
     def store_solution(self, grid):
         """Copies the connections from seleted grid into the current grid"""
-        for battery1 in grid.batteries:
-            battery0 = functions.get_equivalent(self, battery1)
-            battery0.reset()
-            battery0.cost = battery1.cost
-            battery0.capacity - battery1.capacity
-            for house in battery1.houses:
-                house0 = functions.get_equivalent(self, house)
-                house0.battery = battery0
-                battery0.houses.append(house0)
-            for cable1 in battery1.cables:
-                cable0 = classes.Cable(functions.get_equivalent(self, cable1.node1), functions.get_equivalent(self, cable1.node2))
-                battery0.cables.add(cable0)
-
-
+        for node in grid.houses:
+            node1 = self[node]
+            if node.connections[0] != node1.connections[0]:
+                self.disconnect(node1, node1.connections[0])
+                self.connect(node1, node.connections[0])
 
     def get_stats(self):
         self.total_cost = 0
@@ -55,19 +46,33 @@ class Grid:
             return True
         return False
     
-    def connect(self, house, battery): 
-        if house not in battery.houses:
-            battery.houses.append(house)
-            battery.capacity += house.output
-            house.battery = battery
+    def update(self):
+        for battery in self.batteries:
+            battery.update()
+    
+    def connect(self, component1, component2 = None): 
+        if isinstance(component1, (classes.House, classes.Battery)) and isinstance(component2, (classes.House, classes.Battery)):
+            cable = classes.Cable(component1, component2)
+        elif isinstance(component1, classes.Cable):
+            cable = component1
+            component1 = cable.node1
+            component2 = cable.node2
+        if cable not in component1.cables and cable not in component2.cables:
+            component1.cables.add(cable)
+            component2.cables.add(cable)
+            self.cables.add(cable)
+            return cable
+        print('error')
+        return False
 
-
-    def disconnect(self, house, battery):  
+    def disconnect(self, cable):  
         # remove connection referenced or connection connecting components
-        if house in battery.houses:
-            battery.houses.remove(house)
-            battery.capacity += - house.output
-            house.battery = None
+        component1 = cable.node1
+        component2 = cable.node2
+        component1.cables.remove(cable)
+        component2.cables.remove(cable)
+        self.cables.remove(cable)
+        return cable
     
     def reset(self):
         self.total_cost = 0
@@ -121,19 +126,15 @@ class Grid:
                             y = int(row[1])
                             output = float(row[2])
                             self.total_output += output
-                            house = classes.House((x, y), output)
-                            self.houses.append(house)
+                            self.houses.append(classes.House((x, y), output))
 
                         # set node at (x, y) as battery
                         else:
                             x, y = map(int, row[0].split(','))
                             capacity = float(row[1])
                             self.total_capacity += capacity
-                            battery = classes.Battery((x, y), capacity, len(self.batteries))
-                            self.batteries.append(battery)
- 
-            self.house_dict = {(house.cords): house for house in self.houses}
-            self.battery_dict = {(battery.cords): battery for battery in self.batteries}
+                            self.batteries.append(classes.Battery((x, y), capacity, len(self.batteries)))
+            
             # if data input successful 
             if nodes == len(self.houses) + len(self.batteries):
                 print("grid successfully filled")

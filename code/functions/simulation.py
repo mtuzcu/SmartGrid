@@ -1,6 +1,7 @@
 # Contains Functions for running the simulation
 # Mahir Tuzcu - 11070978
 import matplotlib.pyplot as plt
+import classes
 
 def district_solved(grid: object):
     """checks if the current district has all houses connected to a battery"""
@@ -44,10 +45,11 @@ def print_grid(grid: object):
             ax.plot(x, y, '^', markersize=10, color=network_color, label='a' if 'a' not in [text.get_text() for text in ax.texts] else "")
     
         # place cables
-        for cable in battery.network:
+        for cable in battery.cables:
+            network_color = colors[battery.id]
             x0, y0 = cable.node1.cords
             x1, y1 = cable.node2.cords
-            d = 0.1 * battery.id
+            d = 0
             ax.plot([x0, x1], [y0 + d, y1 + d], linewidth=1, color=network_color)
 
     # place unconnected houses on grid:

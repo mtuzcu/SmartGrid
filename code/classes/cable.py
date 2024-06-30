@@ -7,7 +7,7 @@ class Cable:
         """Node on grid containing node data"""
         self.node1 = node1
         self.node2 = node2
-        self.cost = functions.manhatten_distance(node1, node2)
+        self.cost = functions.manhattan_distance(node1, node2)
         self._unique_id = Cable._counter
         Cable._counter += 1
     

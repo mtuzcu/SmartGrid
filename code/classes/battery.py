@@ -18,29 +18,21 @@ class Battery:
                 return True
         return False
 
-    def update(self):
-        data = functions.scan_network(self)
-        if data != False:
-            self.apply_data(data)
-
-    def apply_data(self, data):
-        self.capacity = self.max_capacity + data[0]
-        self.cost = data[1]
-        self.network = data[2]
-        self.houses = data[3]
-
     def reset(self):
         self.capacity = self.max_capacity
-        self.houses = set()
+        self.houses = [self]
         self.cables = set()
-        self.network = ()
         self.cost = 0
 
     def __eq__(self, other):
         if isinstance(other, Battery):
             return (self.cords) == (other.cords)
         return False
-
+    
+    def __lt__(self, other):
+        # Custom less than method to allow Node comparison in priority queue
+        return (self.cords) < (other.cords)
+    
     def __hash__(self):
         return hash(self.cords)
 

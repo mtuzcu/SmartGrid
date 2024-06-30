@@ -1,7 +1,8 @@
 import functions
+import classes
 import heapq
 
-def prim_mst(network):
+def prim_mst(network, grid):
     """
     Prim's algorithm to find the Minimum Spanning Tree (MST) of a graph with dynamically generated edges.
 
@@ -28,9 +29,16 @@ def prim_mst(network):
     while priority_queue:
         weight, node1, node2 = heapq.heappop(priority_queue)
         for node in network:
-            if node[0] == node2 and node not in visited:
+            if node == node2 and node not in visited:
                 mst.append((node1, node2, weight))
                 add_edges(node)
                 break
-    print(mst)
-    return mst
+
+    # connect edges
+    network[0].cables = set()
+    network[0].cost = 0
+    for pair in mst:
+        cable = classes.Cable(pair[0], pair[1])
+        network[0].cables.add(cable)
+        network[0].cost += cable.cost
+    return 
