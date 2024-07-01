@@ -1,36 +1,25 @@
 
+import algorithms.hillclimber
 import classes
 import functions
 import algorithms
+import cProfile
+import time
 
-if __name__ == "__main__":
-   
+
+def main():
+
     # inntialize a grid
     grid = classes.Grid()
     #grid.create_grid('../districts/district_1')
-    grid.create_grid('../districts/district_1')
-    algorithms.random(grid)
-
-    yo = 0
-    if yo == 1:
-
-        h = grid.houses[0]
-        h2 = grid.houses[1]
-        h3 = grid.houses[2]
-        h4 = grid.houses[3]
-        h5 = grid.houses[4]
-        b = grid.batteries[0]
-    
-        c1 = grid.connect(h, h2)
-        grid.connect(h, b)
-        print(b, h, h2)
-        #grid.connect(h3, b)
-
-        print(functions.scan_path(h2, h)[0])
-
-
+    grid.create_grid('../districts/district_1')  
+    random = algorithms.random()
+    random.random(grid)
+    functions.print_grid(grid)
+    #algorithms.hillclimber(grid)
   
-
+if __name__ == "__main__":
+    cProfile.run('main()', 'profile_output.prof')
 
     
 

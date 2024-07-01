@@ -4,8 +4,9 @@ import classes.battery
 import functions
 
 class House:
-    def __init__(self, cords, output):
+    def __init__(self, cords, output, id):
         """Node on grid containing node data"""
+        self.id = id
         self.cords = cords   
         self.output = output
         self.battery = None
@@ -17,13 +18,13 @@ class House:
         self.battery = None
 
     def __eq__(self, other):
-        if isinstance(other, House):
+        if other != None:
             return (self.cords) == (other.cords)
         return False
     
     def __lt__(self, other):
-            # Custom less than method to allow Node comparison in priority queue
-            return (self.cords) < (other.cords)
+        # Custom less than method to allow Node comparison in priority queue
+        return (self.cords) < (other.cords)
     
     def __hash__(self):
         return hash(self.cords)

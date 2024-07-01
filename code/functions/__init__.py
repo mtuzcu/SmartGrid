@@ -1,3 +1,3 @@
-from functions.analyse import *
-from functions.simulation import *
-from functions.path import *
+from functions.operators import *
+from functions.visualisation import *
+from functions.algorithm import *

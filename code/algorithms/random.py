@@ -1,49 +1,40 @@
-
 import functions
 import random
-import classes
 import algorithms
 import copy
 
 class random:
 
-    def __init__(self, grid) -> None:
-        self.grid = grid
-        self.grid2 = copy.deepcopy(grid)
-        self.random(self.grid)
-        self.run()
-    
+    def __init__(self) -> None:
+        pass
 
-    def random(self, grid):
-        while grid.solved() == False:
-            grid.reset()
-            for i in range(0, len(grid.houses)):
-                house = functions.get_random_component(grid.houses)
-                while house.battery != None:
-                    house = functions.get_random_component(grid.houses)
-                viable_batteries = functions.get_viable_batteries(grid, house)
-                if len(viable_batteries) == 0:
-                    break
-                battery = functions.get_random_component(viable_batteries)    
-                grid.connect(house, battery)       
+    def generat_initial_solution(self, grid):
+        while len(grid.unconnected_houses) > 0:
+            house = functions.get_random_component(grid.unconnected_houses)
+            functions.mutate(grid, house)
 
         for battery in grid.batteries:
-            algorithms.prim_mst(battery.houses, grid)
+            algorithms.optimal_network(battery)
         grid.get_stats()
-        self.grid = grid
+        return grid
 
-    def run(self, iter = 100):
-        lowest_cost = 0
+    def run(self, grid, iter):
+        grid = self.generat_initial_solution(grid)
+        lowest_cost_grid = copy.deepcopy(grid)
+        lowest_cost = grid.total_cost
         for i in range(0, iter):
-            print(i)
-            self.grid.reset()
-            self.random(self.grid)
 
-            if lowest_cost == 0 or self.grid.total_cost < lowest_cost:
-                lowest_cost = self.grid.total_cost
-                self.grid2.store_solution(self.grid)
-                print(lowest_cost)
-        functions.print_grid(self.grid2)
+            # mutate state
+            functions.mutate(self.grid)
+            self.grid.get_stats()
+            current_cost = self.grid.total_cost
+
+            if current_cost < lowest_cost:
+                lowest_cost_grid = copy.deepcopy(grid)
+                lowest_cost = current_cost
+        
+        # return lowest cost grid found
+        return lowest_cost_grid
     
 
 

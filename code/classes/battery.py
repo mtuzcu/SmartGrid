@@ -8,24 +8,25 @@ class Battery:
         self.id = id
         self.cords = cords   
         self.max_capacity = -capacity
+        self.connections = set()
+
+        # variables to store old state
+        self.previous_connections = set()
+        self.previous_cost = 0
         self.reset()
 
-    def viability(self, output):
-        if output != None:
-            if isinstance(output, classes.House):
-                output = output.output
-            if self.capacity + output <= 0:
-                return True
+    def viability(self, house):
+        if self.capacity + house.output <= 0:
+            return True
         return False
 
     def reset(self):
         self.capacity = self.max_capacity
-        self.houses = [self]
-        self.cables = set()
+        self.houses = []
         self.cost = 0
 
     def __eq__(self, other):
-        if isinstance(other, Battery):
+        if other != None:
             return (self.cords) == (other.cords)
         return False
     

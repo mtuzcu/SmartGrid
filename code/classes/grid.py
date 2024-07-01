@@ -14,29 +14,13 @@ class Grid:
         # dictionaires and lists
         self.houses: list = []
         self.batteries: list = []
+        self.unconnected_houses = []
 
         # stats
         self.total_flow = 0
         self.total_capacity = 0
         self.total_output = 0
         self.total_cost = 0
-
-    def store_solution(self, grid):
-        """Copies the connections from seleted grid into the current grid"""
-        for battery1 in grid.batteries:
-            battery0 = functions.get_equivalent(self, battery1)
-            battery0.reset()
-            battery0.cost = battery1.cost
-            battery0.capacity - battery1.capacity
-            for house in battery1.houses:
-                house0 = functions.get_equivalent(self, house)
-                house0.battery = battery0
-                battery0.houses.append(house0)
-            for cable1 in battery1.cables:
-                cable0 = classes.Cable(functions.get_equivalent(self, cable1.node1), functions.get_equivalent(self, cable1.node2))
-                battery0.cables.add(cable0)
-
-
 
     def get_stats(self):
         self.total_cost = 0
@@ -56,20 +40,23 @@ class Grid:
         return False
     
     def connect(self, house, battery): 
-        if house not in battery.houses:
+        if house.battery != None:
+            self.disconnect(house, house.battery)
+        if battery != None:
             battery.houses.append(house)
             battery.capacity += house.output
             house.battery = battery
-
+            self.unconnected_houses.remove(house)
 
     def disconnect(self, house, battery):  
         # remove connection referenced or connection connecting components
-        if house in battery.houses:
-            battery.houses.remove(house)
-            battery.capacity += - house.output
-            house.battery = None
+        battery.houses.remove(house)
+        battery.capacity += - house.output
+        house.battery = None
+        self.unconnected_houses.append(house)
     
     def reset(self):
+        self.unconnected_houses = []
         self.total_cost = 0
         self.total_flow = 0
         self.cables = set()
@@ -77,6 +64,8 @@ class Grid:
             battery.reset()
         for house in self.houses:
             house.reset()
+            self.unconnected_houses.append(house)
+        
 
     # ==================================================================
     # Functions below are used to generate the grid. 
@@ -121,15 +110,16 @@ class Grid:
                             y = int(row[1])
                             output = float(row[2])
                             self.total_output += output
-                            house = classes.House((x, y), output)
+                            house = classes.House((x, y), output, nodes)
                             self.houses.append(house)
+                            self.unconnected_houses.append(house)
 
                         # set node at (x, y) as battery
                         else:
                             x, y = map(int, row[0].split(','))
                             capacity = float(row[1])
                             self.total_capacity += capacity
-                            battery = classes.Battery((x, y), capacity, len(self.batteries))
+                            battery = classes.Battery((x, y), capacity, nodes)
                             self.batteries.append(battery)
  
             self.house_dict = {(house.cords): house for house in self.houses}
