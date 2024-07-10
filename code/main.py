@@ -16,8 +16,8 @@ def main():
     random = algorithms.random()
     random.random(grid)
     functions.print_grid(grid)
-    #algorithms.hillclimber(grid)
-  
+    #algorithms.hillclimber(grid)x
+    
 if __name__ == "__main__":
     cProfile.run('main()', 'profile_output.prof')
 
