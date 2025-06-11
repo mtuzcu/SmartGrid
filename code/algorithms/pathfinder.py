@@ -1,5 +1,6 @@
 import functions
 import heapq
+import copy
 from collections import defaultdict
 
 def prim_algorithm(battery):
@@ -69,4 +70,18 @@ def optimal_network(battery):
     minimum_spanning_tree = prim_algorithm(battery)
     battery.connections, battery.cost = optimal_paths(minimum_spanning_tree)
     return 
+
+def update_batteries(options, mode = 0):
+    updated = set()
+    for pair in options:
+        for i in [1, 2]:
+            if pair[i] != None and pair[i] not in updated:
+                updated.add(pair[i])
+                if mode == 0:
+                    pair[i].previous_connections = copy.copy(pair[i].connections)
+                    pair[i].previous_cost = pair[i].cost
+                    optimal_network(pair[i])
+                else:
+                    pair[i].connections = pair[i].previous_connections
+                    pair[i].cost = pair[i].previous_cost
 

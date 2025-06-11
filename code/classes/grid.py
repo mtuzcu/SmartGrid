@@ -65,7 +65,6 @@ class Grid:
         for house in self.houses:
             house.reset()
             self.unconnected_houses.append(house)
-        
 
     # ==================================================================
     # Functions below are used to generate the grid. 

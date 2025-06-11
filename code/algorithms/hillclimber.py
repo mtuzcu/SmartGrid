@@ -6,14 +6,13 @@ class hillclimber:
 
     def __init__(self, grid) -> None:
         self.grid = grid
-        self.neighbour = copy.deepcopy(self.grid)
         self.run(iter)
 
     def run(self, iter):
           
         # get innitial solution
         random = algorithms.random()
-        self.grid = random.generat_initial_solution(self.grid)
+        self.grid = random.generate_initial_solution(self.grid)
         self.neighbour = copy.deepcopy(self.grid)
         lowest_cost = self.grid.total_cost
 
@@ -31,9 +30,12 @@ class hillclimber:
             if current_cost < lowest_cost:
                 i = 0
 
-                #self.grid.store_solution(self.neighbour)
+                # self.grid.store_solution(self.neighbour)
                 self.grid = copy.deepcopy(self.neighbour)
                 lowest_cost = current_cost
+
+                # Experiment
+                # export current soution
 
             # if no improvement is made, restore previous state
             else:

@@ -4,6 +4,10 @@
 import functions
 import random as rand
 import classes
+import os
+import sys
+import algorithms
+from pathlib import Path
 
 def manhattan_distance(node1, node2) -> int:
     """returns manhatten distance between node1 and node2. Input can either be an object or
@@ -28,5 +32,46 @@ def get_random_component(candidates_list: list) -> object:
     index = select_random_index(len(candidates_list))
     return candidates_list[index]
       
+def intermediate_result(steps, cost, itterations):
+    print(f"{steps}, {cost}, {itterations}") 
 
+# these functions check if the given arguments are valid
+def process_input(argv):
+        
+    if len(argv) not in (3, 4): 
+        print(f"ERROR: wrong arguments. usage script.py <disctrict_file> <algorithm(random, hillcimber, annealing)> <itterations (set 0 or leave empty for no itteration limit)>") 
+        sys.exit(2) 
+        
+    district_path = Path("../districts") / argv[1]
+    if os.path.isdir(district_path) == False:
+        print(f"ERROR: district file does not exist") 
+        sys.exit(3)
+    
+    if argv[2] == 'random':
+        algorithm = algorithms.random()
+    elif argv[2] == 'hillclimber':
+        algorithm = algorithms.hillclimber()
+    elif argv[2] == 'annealing':
+        algorithm = algorithms.annealing()
+    else:
+        print(f"ERROR: first argument has to be (random, hillcimber, annealing)") 
+        sys.exit(2)
+    
+    # check if itteration limit is provided
+    if len(argv) == 4:
+        try:
+            itteration_limit = int(argv[3])  
+            if itteration_limit < 0: 
+                raise ValueError
+        except ValueError:
+            print("Error: Fourth argument (itteration limit) must be a empty, a positive integer or 0")
+            sys.exit(3)  
+    else:
+        itteration_limit = 0
 
+    # create grid 
+    grid = classes.Grid()
+    grid.create_grid(district_path)  
+
+    # return the proper variables
+    return grid, algorithm, itteration_limit

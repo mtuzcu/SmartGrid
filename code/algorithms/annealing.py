@@ -7,14 +7,13 @@ class annealing:
 
     def __init__(self, grid, iter = 100) -> None:
         self.grid = grid
-        self.neighbour = copy.deepcopy(self.grid)
         self.run(iter)
 
     def run(self, iter, T0 = 10000, alpha = 0.999):
           
         # get innitial solution
         random = algorithms.random()
-        self.grid = random.generat_initial_solution(self.grid)
+        self.grid = random.generate_initial_solution(self.grid)
         self.neighbour = copy.deepcopy(self.grid)
         lowest_cost = self.grid.total_cost
         current_cost = lowest_cost

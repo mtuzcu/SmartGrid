@@ -1,18 +1,13 @@
-import algorithms.hillclimber
-import classes
-import functions
-import algorithms
-import cProfile
-import time
-import sys
+# this is for experiments
 import subprocess
 import time
+import algorithms
+import csv
 import os
-    
+import classes
+import sys
 
-experiment = False
-start_time = 0
-algorithm = algorithms.random
+# arguments: district, algorithm (random/hillclimber/annealing), itterations
 
 def runexperiment(algorithm, total_time, sub_time):
 
@@ -42,16 +37,6 @@ class store:
     def store_data(self, time, line):
         step, cost, itterations = line.split(",")
         self.writer.writerow([time, step, cost, itterations])
-    
 
-
-if __name__ == "__main__":
-
-    if experiment == True:
-        None
-    else:
-        grid, algorithm, itteration_limit = functions.process_input(sys.argv)
-        print(algorithm)
-
-
+     
     
