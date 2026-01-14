@@ -74,4 +74,12 @@ def update_batteries(options, mode = 0):
                     pair[i].connections = pair[i].previous_connections
                     pair[i].cost = pair[i].previous_cost
       
-    
+def update_best_grid(lowest_cost_grid, new_grid, lowest_cost):
+    new_grid.get_stats()
+    current_cost = new_grid.total_cost
+    # check if a new lower-cost sulation found
+    if current_cost < lowest_cost:
+        lowest_cost_grid = copy.deepcopy(new_grid)
+        lowest_cost = current_cost
+        return 0
+    return 1

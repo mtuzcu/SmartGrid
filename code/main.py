@@ -1,16 +1,14 @@
-import algorithms.hillclimber
+import algorithms
 import classes
 import functions
-import algorithms
 import cProfile
 import time
 import sys
 import subprocess
-import time
 import os
-    
+import csv
 
-experiment = False
+experiment = True
 start_time = 0
 algorithm = algorithms.random
 
@@ -42,16 +40,15 @@ class store:
     def store_data(self, time, line):
         step, cost, itterations = line.split(",")
         self.writer.writerow([time, step, cost, itterations])
-    
 
 
 if __name__ == "__main__":
 
-    if experiment == True:
+    if experiment == False:
         None
     else:
         grid, algorithm, itteration_limit = functions.process_input(sys.argv)
-        print(algorithm)
+        
 
 
     
